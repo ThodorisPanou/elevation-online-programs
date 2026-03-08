@@ -25,6 +25,7 @@ export default function AthleteProgramsPage() {
   const [allAthletes,  setAllAthletes]  = useState<{id:string,fullName:string}[]>([])
   const [copyTarget,   setCopyTarget]   = useState('')
   const [copying,      setCopying]      = useState(false)
+  const [copiedId,     setCopiedId]     = useState<string | null>(null)
   const [copyError,    setCopyError]    = useState<string | null>(null)
 
   useEffect(() => {
@@ -64,6 +65,13 @@ export default function AthleteProgramsPage() {
     } finally {
       setDeleting(false)
     }
+  }
+
+  const handleShareCopy = (token: string, id: string) => {
+    const url = `${window.location.origin}/program/${token}`
+    navigator.clipboard.writeText(url)
+    setCopiedId(id)
+    setTimeout(() => setCopiedId(null), 2000)
   }
 
   const openCopy = async (id: string, title: string) => {
@@ -212,6 +220,14 @@ export default function AthleteProgramsPage() {
           padding: 7px 14px; border-radius: 8px; cursor: pointer; transition: all 0.15s;
         }
         .btn-copy:hover { background: #122020; border-color: #2a5050; color: #60c0c0; }
+        .btn-share {
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+          background: #12120e; color: #808040; border: 1px solid #282810;
+          padding: 7px 14px; border-radius: 8px; cursor: pointer; transition: all 0.15s;
+        }
+        .btn-share:hover { background: #1a1a10; border-color: #484820; color: #c0c060; }
+        .btn-share.copied { color: #60c060; border-color: #205020; background: #0e1a0e; }
 
         /* Copy modal */
         .modal-select {
@@ -369,6 +385,12 @@ export default function AthleteProgramsPage() {
                         </button>
                         <button className="btn-edit" onClick={() => router.push(`/admin/programs/${athleteId}/edit/${p.id}`)}>
                           Edit
+                        </button>
+                        <button
+                          className={`btn-share${copiedId === p.id ? ' copied' : ''}`}
+                          onClick={() => handleShareCopy(p.public_token, p.id)}
+                        >
+                          {copiedId === p.id ? '✓ Copied!' : '🔗 Link'}
                         </button>
                         <button className="btn-copy" onClick={() => openCopy(p.id, p.title)}>
                           Copy
