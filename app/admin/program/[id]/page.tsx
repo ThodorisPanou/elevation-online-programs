@@ -222,41 +222,54 @@ export default function AdminProgramPage() {
                         <div className="block-dot" />
                         <div className="block-name">{block.name}</div>
                       </div>
-                      {block.block_exercises.length > 0 && (
-                        <table className="ex-table">
-                          <thead className="ex-thead">
-                            <tr><th>Exercise</th><th>Sets</th><th>Reps</th><th>Kg</th><th>Rest</th></tr>
-                          </thead>
-                          <tbody>
-                            {block.block_exercises.map((be: ViewBlockExercise) => (
-                              <React.Fragment key={be.id}>
-                                <tr className="ex-row">
-                                  <td className="ex-name">
-                                  {be.exercise?.name ?? '—'}
-                                  {be.exercise?.video_url && (
-                                    <button
-                                      className="btn-play"
-                                      onClick={() => setVideoModal({ url: be.exercise.video_url!, name: be.exercise?.name ?? '' })}
-                                    >
-                                      ▶ Video
-                                    </button>
-                                  )}
-                                </td>
-                                  <td className="ex-cell"><span className={be.sets != null ? 'ex-cell-val' : ''}>{be.sets ?? '—'}</span></td>
-                                  <td className="ex-cell"><span className={be.reps ? 'ex-cell-val' : ''}>{be.reps ?? '—'}</span></td>
-                                  <td className="ex-cell"><span className={be.kg ? 'ex-cell-val' : ''}>{be.kg ?? '—'}</span></td>
-                                  <td className="ex-cell"><span className={be.rest_seconds != null ? 'ex-cell-val' : ''}>{be.rest_seconds != null ? `${be.rest_seconds}s` : '—'}</span></td>
+                      {block.block_exercises.length > 0 && (() => {
+                          const showSets = block.block_exercises.some(be => be.sets != null)
+                          const showReps = block.block_exercises.some(be => be.reps != null && be.reps !== '')
+                          const showKg   = block.block_exercises.some(be => be.kg != null && be.kg !== '')
+                          const showRest = block.block_exercises.some(be => be.rest_seconds != null)
+                          const colSpanCount = 1 + (showSets ? 1 : 0) + (showReps ? 1 : 0) + (showKg ? 1 : 0) + (showRest ? 1 : 0)
+                          return (
+                            <table className="ex-table">
+                              <thead className="ex-thead">
+                                <tr>
+                                  <th>Exercise</th>
+                                  {showSets && <th>Sets</th>}
+                                  {showReps && <th>Reps</th>}
+                                  {showKg   && <th>Kg</th>}
+                                  {showRest && <th>Rest</th>}
                                 </tr>
-                                {be.notes && (
-                                  <tr className="ex-row">
-                                    <td colSpan={5} className="ex-notes">📝 {be.notes}</td>
-                                  </tr>
-                                )}
-                              </React.Fragment>
-                            ))}
-                          </tbody>
-                        </table>
-                      )}
+                              </thead>
+                              <tbody>
+                                {block.block_exercises.map((be: ViewBlockExercise) => (
+                                  <React.Fragment key={be.id}>
+                                    <tr className="ex-row">
+                                      <td className="ex-name">
+                                        {be.exercise?.name ?? '—'}
+                                        {be.exercise?.video_url && (
+                                          <button
+                                            className="btn-play"
+                                            onClick={() => setVideoModal({ url: be.exercise.video_url!, name: be.exercise?.name ?? '' })}
+                                          >
+                                            ▶ Video
+                                          </button>
+                                        )}
+                                      </td>
+                                      {showSets && <td className="ex-cell"><span className={be.sets != null ? 'ex-cell-val' : ''}>{be.sets ?? '—'}</span></td>}
+                                      {showReps && <td className="ex-cell"><span className={be.reps ? 'ex-cell-val' : ''}>{be.reps ?? '—'}</span></td>}
+                                      {showKg   && <td className="ex-cell"><span className={be.kg ? 'ex-cell-val' : ''}>{be.kg ?? '—'}</span></td>}
+                                      {showRest && <td className="ex-cell"><span className={be.rest_seconds != null ? 'ex-cell-val' : ''}>{be.rest_seconds != null ? `${be.rest_seconds}s` : '—'}</span></td>}
+                                    </tr>
+                                    {be.notes && (
+                                      <tr className="ex-row">
+                                        <td colSpan={colSpanCount} className="ex-notes">📝 {be.notes}</td>
+                                      </tr>
+                                    )}
+                                  </React.Fragment>
+                                ))}
+                              </tbody>
+                            </table>
+                          )
+                        })()}
                     </div>
                   ))}
                 </div>
