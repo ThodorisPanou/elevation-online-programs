@@ -40,13 +40,18 @@ export async function getExerciseById(id: string): Promise<ExerciseViewModel | n
   return mapToExerciseViewModel(data)
 }
 
-// ─── Cloudflare R2 ─────────────────────────────────────────────────────────
-// video_url in the DB stores the full R2 public URL
-// e.g. https://pub-xxx.r2.dev/uuid.mp4
-// The <video> tag uses it directly.
+// ─── Cloudflare R2 — direct browser upload via presigned URL ───────────────
+// Flow:
+//   1. Ask our API route for a presigned PUT URL (no file involved, tiny request)
+//   2. Browser PUTs the file directly to R2 — no server size limit
+//   3. Save the public URL to exercises.video_url
 
-export async function uploadExerciseVideo(exerciseId: string, file: File): Promise<string> {
-  // 1. Delete old video from R2 if exists
+export async function uploadExerciseVideo(
+  exerciseId: string,
+  file: File,
+  onProgress?: (pct: number) => void,
+): Promise<string> {
+  // 1. Delete old video if exists (fire and forget)
   const { data: existing } = await supabase
     .from('exercises')
     .select('video_url')
@@ -61,23 +66,42 @@ export async function uploadExerciseVideo(exerciseId: string, file: File): Promi
     }).catch(e => console.warn('Old video delete failed:', e))
   }
 
-  // 2. Upload to R2 via API route
-  const formData = new FormData()
-  formData.append('file', file)
-
+  // 2. Get presigned URL from our API route
   const res = await fetch('/api/upload-video', {
-    method: 'POST',
-    body:   formData,
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ filename: file.name, contentType: file.type }),
   })
 
   if (!res.ok) {
     const err = await res.json()
-    throw new Error(err.error ?? 'Video upload failed')
+    throw new Error(err.error ?? 'Failed to get upload URL')
   }
 
-  const { videoId: publicUrl } = await res.json()
+  const { presignedUrl, publicUrl } = await res.json()
 
-  // 3. Save the public URL to exercises table
+  // 3. Upload directly to R2 from the browser with progress tracking
+  await new Promise<void>((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('PUT', presignedUrl)
+    xhr.setRequestHeader('Content-Type', file.type)
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) {
+        onProgress(Math.round((e.loaded / e.total) * 100))
+      }
+    }
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) resolve()
+      else reject(new Error(`R2 upload failed: ${xhr.status} ${xhr.responseText}`))
+    }
+
+    xhr.onerror = () => reject(new Error('R2 upload network error'))
+    xhr.send(file)
+  })
+
+  // 4. Save the public URL to the DB
   const { error: updateError } = await supabase
     .from('exercises')
     .update({ video_url: publicUrl })

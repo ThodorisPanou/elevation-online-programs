@@ -366,6 +366,7 @@ function ExerciseRow({
   onVideoRemoved:    () => void
 }) {
   const [uploading,  setUploading]  = useState(false)
+  const [progress,   setProgress]   = useState(0)
   const [removing,   setRemoving]   = useState(false)
   const [uploadErr,  setUploadErr]  = useState<string | null>(null)
 
@@ -386,19 +387,21 @@ function ExerciseRow({
     const file = e.target.files?.[0]
     if (!file || !be.exerciseId) return
     setUploading(true)
+    setProgress(0)
     setUploadErr(null)
     try {
-      const url = await uploadExerciseVideo(be.exerciseId, file)
+      const url = await uploadExerciseVideo(be.exerciseId, file, (pct) => setProgress(pct))
       onVideoUploaded(url)
     } catch (err: any) {
       setUploadErr(err.message ?? 'Upload failed')
     } finally {
       setUploading(false)
+      setProgress(0)
       e.target.value = ''
     }
   }
 
-  const hasVideo = !!be.video_url
+  const hasVideo  = !!be.video_url
   const canUpload = !!be.exerciseId
 
   return (
@@ -425,8 +428,13 @@ function ExerciseRow({
             : hasVideo ? 'Has video — click to replace'
             : 'Upload video'
           }
+          style={uploading ? {
+            background: `linear-gradient(to right, #1a2a1a ${progress}%, #101a10 ${progress}%)`,
+            color: '#80c080',
+            borderColor: '#2a5a2a',
+          } : undefined}
         >
-          {uploading ? '↑…' : hasVideo ? '▶ Video' : '+ Video'}
+          {uploading ? `${progress}%` : hasVideo ? '▶ Video' : '+ Video'}
           <input
             type="file"
             accept="video/*"
@@ -435,7 +443,7 @@ function ExerciseRow({
             onChange={handleVideoUpload}
           />
         </label>
-        {hasVideo && (
+        {hasVideo && !uploading && (
           <button
             className="btn-remove-video"
             onClick={handleVideoRemove}
