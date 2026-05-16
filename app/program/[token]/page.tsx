@@ -272,7 +272,7 @@ export default function PublicProgramPage() {
                         <div className="block-name">{block.name}</div>
                       </div>
                       {block.block_exercises.length > 0 && (() => {
-                          const showSets = block.block_exercises.some(be => be.sets != null)
+                          const showSets = block.block_exercises.some(be => be.sets != null && be.sets !== 0)
                           const showReps = block.block_exercises.some(be => be.reps != null && be.reps !== '')
                           const showKg   = block.block_exercises.some(be => be.kg != null && be.kg !== '')
                           const showRest = block.block_exercises.some(be => be.rest_seconds != null)
