@@ -300,7 +300,6 @@ export async function copyProgram(programId: string, targetAthleteId: string): P
     .insert([{
       athlete_id:   targetAthleteId,
       title:        prog.title + ' (Copy)',
-      public_token: crypto.randomUUID(),
     }])
     .select()
     .single()
