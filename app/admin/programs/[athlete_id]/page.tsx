@@ -77,7 +77,7 @@ export default function AthleteProgramsPage() {
   const openCopy = async (id: string, title: string) => {
     setCopyId(id); setCopyTitle(title); setCopyError(null); setCopyTarget('')
     const athletes = await getAllAthletes()
-    setAllAthletes(athletes.filter(a => a.id !== athleteId))
+    setAllAthletes(athletes)
   }
 
   const closeCopy = () => { if (copying) return; setCopyId(null) }
