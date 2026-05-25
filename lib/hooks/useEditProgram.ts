@@ -19,6 +19,7 @@ import {
 interface UseEditProgramResult {
   // State
   title:            string
+  description:      string
   days:             UIDay[]
   saving:           boolean
   loading:          boolean
@@ -28,6 +29,7 @@ interface UseEditProgramResult {
   totalExercises:   number
   // Title
   setTitle:         (title: string) => void
+  setDescription:   (desc: string) => void
   // Day actions
   addDay:           () => void
   removeDay:        (tempId: string) => void
@@ -63,7 +65,8 @@ export function useEditProgram({
   const catalogueRef = useRef(catalogue)
   useEffect(() => { catalogueRef.current = catalogue }, [catalogue])
 
-  const [title,   setTitle]   = useState('')
+  const [title,       setTitle]       = useState('')
+  const [description, setDescription] = useState('')
   const [days,    setDays]    = useState<UIDay[]>([])
   const [saving,  setSaving]  = useState(false)
   const [loading, setLoading] = useState(!!programId)  // only loading if editing
@@ -86,6 +89,7 @@ export function useEditProgram({
       } else {
         const vm = mapToEditProgramViewModel(raw)
         setTitle(vm.title)
+        setDescription(vm.description ?? '')
         setDays(vm.days)
       }
 
@@ -243,7 +247,7 @@ export function useEditProgram({
     setSaving(true)
     setError(null)
 
-    const vm: EditProgramViewModel = { programId, title, days }
+    const vm: EditProgramViewModel = { programId, title, description, days }
 
     try {
       if (programId) {
@@ -261,6 +265,7 @@ export function useEditProgram({
 
   return {
     title,
+    description,
     days,
     saving,
     loading,
@@ -268,6 +273,7 @@ export function useEditProgram({
     visibleDays:    getVisibleDays(days),
     totalExercises: getTotalExercises(days),
     setTitle,
+    setDescription,
     addDay,
     removeDay,
     updateDayName,
@@ -281,4 +287,3 @@ export function useEditProgram({
     save,
   }
 }
-

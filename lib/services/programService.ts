@@ -1,13 +1,13 @@
 // lib/services/programService.ts
 
 import { supabase } from '@/lib/supabaseClient'
-import { ProgramViewModel, mapToProgramViewModel } from '@/lib/viewModels/ProgramViewModel'
-import { EditProgramViewModel, UIDay, UIBlock, UIBlockExercise } from '@/lib/viewModels/EditProgramViewModel'
+import { ProgramViewModel, mapToProgramViewModel } from '@/lib/viewmodels/ProgramViewModel'
+import { EditProgramViewModel, UIDay, UIBlock, UIBlockExercise } from '@/lib/viewmodels/EditProgramViewModel'
 
 // ─── Shared query ─────────────────────────────────────────────────────────
 
 const PROGRAM_QUERY = `
-  id, title, public_token, created_at,
+  id, title, description, public_token, created_at,
   athletes ( id, name, surname, avatar_url ),
   program_days (
     id, name, order_index,
@@ -66,7 +66,7 @@ export async function getProgramRawById(id: string): Promise<any | null> {
   const { data, error } = await supabase
     .from('programs')
     .select(`
-      id, title,
+      id, title, description,
       program_days (
         id, name, order_index,
         blocks (
@@ -90,7 +90,7 @@ export async function getProgramRawById(id: string): Promise<any | null> {
 export async function createProgram(athleteId: string, vm: EditProgramViewModel): Promise<string | null> {
   const { data, error } = await supabase
     .from('programs')
-    .insert([{ athlete_id: athleteId, title: vm.title }])
+    .insert([{ athlete_id: athleteId, title: vm.title, description: vm.description || null }])
     .select()
     .single()
 
@@ -105,7 +105,7 @@ export async function updateProgram(vm: EditProgramViewModel): Promise<void> {
 
   const { error } = await supabase
     .from('programs')
-    .update({ title: vm.title })
+    .update({ title: vm.title, description: vm.description || null })
     .eq('id', vm.programId)
 
   if (error) { console.error('updateProgram:', error); throw error }

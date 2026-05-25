@@ -43,6 +43,7 @@ export interface ViewAthlete {
 export interface ProgramViewModel {
   id:           string
   title:        string
+  description?: string
   public_token: string
   created_at:   string
   athlete:      ViewAthlete
@@ -59,6 +60,7 @@ export function mapToProgramViewModel(raw: any): ProgramViewModel {
   return {
     id:           raw.id,
     title:        raw.title,
+    description:  raw.description ?? undefined,
     public_token: raw.public_token,
     created_at:   raw.created_at,
 

@@ -74,6 +74,13 @@ export default function PublicProgramPage() {
           border-bottom:1px solid #1a1a24; padding:48px 24px 40px;
         }
         .pv-meta { display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-top:28px; padding-top:24px; border-top:1px solid #1a1a24; }
+        .pv-description {
+          font-family:'Barlow',sans-serif; font-size:16px; font-weight:400;
+          color:#6a6a8a; line-height:1.6; margin-top:16px;
+          padding:16px 20px; background:#111116; border:1px solid #1a1a24;
+          border-radius:10px; border-left:3px solid #3a3a6a;
+        }
+
         .pv-athlete { display:flex; align-items:center; gap:16px; }
         .pv-avatar {
           width:80px; height:80px; border-radius:50%;
@@ -212,6 +219,9 @@ export default function PublicProgramPage() {
           <div className="pv-hero-inner">
             <div className="pv-badge">📋 Training Program</div>
             <h1 className="pv-title">{program.title}</h1>
+            {program.description && (
+              <div className="pv-description">{program.description}</div>
+            )}
             <div className="pv-meta">
               <div className="pv-athlete">
                 <div className="pv-avatar">

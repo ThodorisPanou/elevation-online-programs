@@ -37,9 +37,10 @@ export interface UIDay {
 }
 
 export interface EditProgramViewModel {
-  programId?: string       // undefined = new program
-  title:      string
-  days:       UIDay[]
+  programId?:   string       // undefined = new program
+  title:        string
+  description?: string
+  days:         UIDay[]
 }
 
 // ─── Factory helpers ──────────────────────────────────────────────────────
@@ -78,8 +79,9 @@ export function createUIDay(existingCount: number): UIDay {
 
 export function mapToEditProgramViewModel(raw: any): EditProgramViewModel {
   return {
-    programId: raw.id,
-    title:     raw.title,
+    programId:   raw.id,
+    title:       raw.title,
+    description: raw.description ?? '',
     days: [...(raw.program_days ?? [])]
       .sort((a: any, b: any) => a.order_index - b.order_index)
       .map((d: any): UIDay => ({

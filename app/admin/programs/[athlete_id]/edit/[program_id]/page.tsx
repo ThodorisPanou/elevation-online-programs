@@ -16,8 +16,8 @@ export default function EditProgramPage() {
   const { catalogue } = useExercises()
 
   const {
-    title, visibleDays, totalExercises, saving, loading, error,
-    setTitle, addDay, removeDay, updateDayName,
+    title, description, visibleDays, totalExercises, saving, loading, error,
+    setTitle, setDescription, addDay, removeDay, updateDayName,
     addBlock, removeBlock, updateBlockName,
     addExercise, removeExercise, updateExField, resolveExerciseId,
     save,
@@ -36,15 +36,7 @@ export default function EditProgramPage() {
 
   if (loading) return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&display=swap');
-        body { background:#0d0d0f; margin:0; }
-        .loader { display:flex; align-items:center; justify-content:center; min-height:100vh; gap:8px; }
-        .loader-dot { width:8px; height:8px; border-radius:50%; background:#e8ff4a; animation:bounce 0.8s infinite alternate; }
-        .loader-dot:nth-child(2){animation-delay:0.2s} .loader-dot:nth-child(3){animation-delay:0.4s}
-        @keyframes bounce { to { transform:translateY(-12px); opacity:0.4; } }
-      `}</style>
-      <div className="loader">
+<div className="loader">
         <div className="loader-dot"/><div className="loader-dot"/><div className="loader-dot"/>
       </div>
     </>
@@ -53,6 +45,7 @@ export default function EditProgramPage() {
   return (
     <ProgramEditor
       title={title}
+      description={description ?? ''}
       visibleDays={visibleDays}
       totalExercises={totalExercises}
       saving={saving}
@@ -61,6 +54,7 @@ export default function EditProgramPage() {
       saveLabel="Save Changes"
       breadcrumb="Edit Program"
       setTitle={setTitle}
+      setDescription={setDescription}
       addDay={addDay}
       removeDay={removeDay}
       updateDayName={updateDayName}

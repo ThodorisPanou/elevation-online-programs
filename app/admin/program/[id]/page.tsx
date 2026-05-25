@@ -93,6 +93,13 @@ export default function AdminProgramPage() {
           color:#e8ff4a;background:#1e2010;border:1px solid #3a4010;
           padding:4px 10px;border-radius:4px;margin-bottom:16px;
         }
+        .pv-description {
+          font-family:'Barlow',sans-serif; font-size:16px; font-weight:400;
+          color:#6a6a8a; line-height:1.6; margin-top:16px;
+          padding:16px 20px; background:#111116; border:1px solid #1a1a24;
+          border-radius:10px; border-left:3px solid #3a3a6a;
+        }
+
         .hero-title{
           font-family:'Barlow Condensed',sans-serif;
           font-size:clamp(28px,5vw,48px);font-weight:800;color:#e8e8ec;line-height:1;margin-bottom:16px;

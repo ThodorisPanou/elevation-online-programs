@@ -15,8 +15,8 @@ export default function NewProgramPage() {
   const { catalogue } = useExercises()
 
   const {
-    title, visibleDays, totalExercises, saving, error,
-    setTitle, addDay, removeDay, updateDayName,
+    title, description, visibleDays, totalExercises, saving, error,
+    setTitle, setDescription, addDay, removeDay, updateDayName,
     addBlock, removeBlock, updateBlockName,
     addExercise, removeExercise, updateExField, resolveExerciseId,
     save,
@@ -35,6 +35,7 @@ export default function NewProgramPage() {
   return (
     <ProgramEditor
       title={title}
+      description={description ?? ''}
       visibleDays={visibleDays}
       totalExercises={totalExercises}
       saving={saving}
@@ -43,6 +44,7 @@ export default function NewProgramPage() {
       saveLabel="Create Program"
       breadcrumb="New Program"
       setTitle={setTitle}
+      setDescription={setDescription}
       addDay={addDay}
       removeDay={removeDay}
       updateDayName={updateDayName}

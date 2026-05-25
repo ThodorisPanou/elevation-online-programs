@@ -12,6 +12,7 @@ import { ExerciseCatalogueItem } from '@/lib/viewModels/ExerciseViewModel'
 interface ProgramEditorProps {
   // State
   title:          string
+  description:    string
   visibleDays:    UIDay[]
   totalExercises: number
   saving:         boolean
@@ -19,6 +20,8 @@ interface ProgramEditorProps {
   catalogue:      ExerciseCatalogueItem[]
   // Labels
   saveLabel:      string
+  // Callbacks — passed straight from useEditProgram
+  setDescription: (v: string) => void
   breadcrumb:     string
   // Callbacks — passed straight from useEditProgram
   setTitle:       (v: string) => void
@@ -37,9 +40,9 @@ interface ProgramEditorProps {
 }
 
 export default function ProgramEditor({
-  title, visibleDays, totalExercises, saving, error, catalogue,
+  title, description, visibleDays, totalExercises, saving, error, catalogue,
   saveLabel, breadcrumb,
-  setTitle, addDay, removeDay, updateDayName,
+  setTitle, setDescription, addDay, removeDay, updateDayName,
   addBlock, removeBlock, updateBlockName,
   addExercise, removeExercise, updateExField,
   resolveExerciseId,
@@ -221,6 +224,16 @@ export default function ProgramEditor({
         .btn-remove-video:hover:not(:disabled) { color: #ff6060; border-color: #5a2020; background: #1a1010; }
         .btn-remove-video:disabled { opacity: 0.4; cursor: not-allowed; }
 
+        .description-input {
+          width: 100%; background: transparent; border: none;
+          border-bottom: 1px solid #1f1f2a; color: #8888aa;
+          font-family: 'Barlow', sans-serif; font-size: 15px; font-weight: 400;
+          padding: 4px 0 12px; outline: none; resize: none;
+          transition: border-color 0.2s; margin-bottom: 32px; line-height: 1.5;
+        }
+        .description-input::placeholder { color: #2a2a38; }
+        .description-input:focus { border-bottom-color: #3a3a5a; }
+
         .add-day-btn {
           display: flex; align-items: center; justify-content: center; gap: 8px;
           width: 100%; padding: 14px; background: transparent;
@@ -256,6 +269,14 @@ export default function ProgramEditor({
             value={title}
             onChange={e => setTitle(e.target.value)}
             placeholder="Untitled Program"
+          />
+
+          <textarea
+            className="description-input"
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            placeholder="Optional description — goals, notes, methodology…"
+            rows={2}
           />
 
           <div className="days-container">
