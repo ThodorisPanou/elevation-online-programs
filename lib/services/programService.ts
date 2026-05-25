@@ -1,8 +1,8 @@
 // lib/services/programService.ts
 
 import { supabase } from '@/lib/supabaseClient'
-import { ProgramViewModel, mapToProgramViewModel } from '@/lib/viewmodels/ProgramViewModel'
-import { EditProgramViewModel, UIDay, UIBlock, UIBlockExercise } from '@/lib/viewmodels/EditProgramViewModel'
+import { ProgramViewModel, mapToProgramViewModel } from '@/lib/viewModels/ProgramViewModel'
+import { EditProgramViewModel, UIDay, UIBlock, UIBlockExercise } from '@/lib/viewModels/EditProgramViewModel'
 
 // ─── Shared query ─────────────────────────────────────────────────────────
 
