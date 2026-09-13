@@ -349,8 +349,8 @@ export default function PublicProgramPage() {
               className="video-player"
               src={videoModal.url}
               controls
-              autoPlay
-            />
+              playsInline
+          />
           </div>
         </div>
       )}
