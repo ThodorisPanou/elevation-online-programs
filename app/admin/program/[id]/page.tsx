@@ -156,7 +156,41 @@ export default function AdminProgramPage() {
         .ex-cell{padding:12px 8px;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:#8888aa;}
         .ex-cell-val{color:#c0c0e0;}
         .ex-notes{padding:4px 16px 10px;font-size:12px;color:#3a3a5a;font-style:italic;}
-
+        .btn-play {
+          display:inline-flex; align-items:center; gap:5px;
+          font-family:'Barlow Condensed',sans-serif;
+          font-size:12px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
+          color:#60a060; background:#0e180e; border:1px solid #1a3a1a;
+          padding:3px 10px; border-radius:6px; cursor:pointer; transition:all 0.15s;
+          vertical-align:middle; margin-left:6px;
+        }
+        .btn-play:hover { color:#80cc80; border-color:#2a5a2a; background:#121e12; }
+        .video-modal-overlay {
+          position:fixed; inset:0; z-index:200;
+          background:rgba(0,0,0,0.9); backdrop-filter:blur(8px);
+          display:flex; align-items:center; justify-content:center;
+          padding:24px; animation:fadeIn 0.15s ease;
+        }
+        .video-modal {
+          background:#0d0d0f; border:1px solid #2a2a3a; border-radius:16px;
+          padding:20px; width:100%; max-width:680px; animation:slideUp 0.2s ease;
+        }
+        .video-modal-header {
+          display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;
+        }
+        .video-modal-title {
+          font-family:'Barlow Condensed',sans-serif;
+          font-size:18px; font-weight:700; color:#e8e8ec; letter-spacing:0.04em;
+        }
+        .video-modal-close {
+          width:32px; height:32px; display:flex; align-items:center; justify-content:center;
+          background:#1a1a22; border:1px solid #2a2a32; border-radius:8px;
+          color:#6a6a7a; cursor:pointer; font-size:18px; transition:all 0.15s;
+        }
+        .video-modal-close:hover { color:#e8e8ec; background:#22222e; }
+        .video-player { width:100%; border-radius:10px; background:#000; display:block; }
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+        @keyframes slideUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
         .empty-day{text-align:center;padding:48px;color:#2a2a3a;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;}
       `}</style>
 
@@ -177,6 +211,9 @@ export default function AdminProgramPage() {
           <div className="hero-inner">
             <div className="hero-badge">📋 Training Program</div>
             <div className="hero-title">{program.title}</div>
+            {program.description && (
+              <div className="pv-description">{program.description}</div>
+            )}
             <div className="hero-meta">
               <div className="hero-athlete">
                 <div className="hero-avatar">
