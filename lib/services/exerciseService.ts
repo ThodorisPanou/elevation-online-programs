@@ -4,8 +4,10 @@ import { supabase } from '@/lib/supabaseClient'
 import {
   ExerciseViewModel,
   ExerciseCatalogueItem,
+  ExerciseLibraryItem,
   mapToExerciseViewModel,
   mapToExerciseCatalogueItem,
+  mapToExerciseLibraryItem,
 } from '@/lib/viewModels/ExerciseViewModel'
 
 export async function getAllExercises(): Promise<ExerciseViewModel[]> {
@@ -26,6 +28,27 @@ export async function getExerciseCatalogue(): Promise<ExerciseCatalogueItem[]> {
 
   if (error) { console.error('getExerciseCatalogue:', error); return [] }
   return (data ?? []).map(mapToExerciseCatalogueItem)
+}
+
+// Exercises that have a video, with the programs each one is used in
+export async function getExerciseLibrary(): Promise<ExerciseLibraryItem[]> {
+  const { data, error } = await supabase
+    .from('exercises')
+    .select(`
+      id, name, video_url,
+      block_exercises (
+        blocks (
+          program_days (
+            programs ( id, title, athletes ( name, surname ) )
+          )
+        )
+      )
+    `)
+    .not('video_url', 'is', null)
+    .order('name')
+
+  if (error) throw error
+  return (data ?? []).map(mapToExerciseLibraryItem)
 }
 
 export async function getExerciseById(id: string): Promise<ExerciseViewModel | null> {

@@ -58,7 +58,7 @@ export function ProgramHero({ program, compact = false }: {
 
 // ─── Day tabs + blocks ────────────────────────────────────────────────────
 
-type Video = { url: string; name: string }
+export type Video = { url: string; name: string }
 
 export function ProgramDays({ days, activeDay, setActiveDay, belowHeader = false }: {
   days:         ViewDay[]
@@ -184,7 +184,7 @@ function BlockCard({ block, index, onPlayVideo }: {
 
 // ─── VideoModal ───────────────────────────────────────────────────────────
 
-function VideoModal({ video, onClose }: { video: Video; onClose: () => void }) {
+export function VideoModal({ video, onClose }: { video: Video; onClose: () => void }) {
   return (
     <Modal onClose={onClose} title={video.name} className="video-modal" overlayClassName="video-modal-overlay">
       <div className="video-modal-header">

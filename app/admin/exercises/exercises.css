@@ -1,0 +1,80 @@
+/* Styles for app/admin/exercises/page.tsx */
+
+/* ── Toolbar: search + filters ── */
+
+.lib-toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 20px; }
+
+.lib-search { position: relative; flex: 1; min-width: 240px; }
+.lib-search .field-input { padding-left: 38px; padding-right: 38px; }
+.lib-search input::-webkit-search-cancel-button { display: none; }
+.lib-search-icon {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  color: var(--fg-faint); pointer-events: none;
+}
+.lib-search-clear { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); }
+
+.lib-filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.lib-filter {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-display);
+  font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--fg-muted); background: #14141a; border: 1px solid var(--border-strong);
+  padding: 8px 12px; border-radius: 20px; cursor: pointer; transition: all 0.15s;
+}
+.lib-filter span { color: var(--fg-faint); }
+.lib-filter:hover { color: var(--fg); border-color: #2e2e40; }
+.lib-filter.active { color: var(--accent); background: #1e2010; border-color: #3a4010; }
+.lib-filter.active span { color: #b0c040; }
+
+/* ── List ── */
+
+.lib-list { display: flex; flex-direction: column; gap: 10px; list-style: none; margin: 0; padding: 0; }
+
+.lib-item {
+  display: flex; align-items: flex-start; gap: 16px;
+  padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  animation: fadeUp 0.3s ease both;
+}
+
+.lib-play {
+  width: 48px; height: 48px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: #80c880; background: #0e180e; border: 1px solid #1f4a1f; border-radius: 10px;
+  cursor: pointer; transition: all 0.15s;
+}
+.lib-play:hover { color: #a0f0a0; border-color: #2a602a; background: #122012; transform: scale(1.04); }
+
+.lib-info { flex: 1; min-width: 0; }
+.lib-name {
+  font-family: var(--font-display);
+  font-size: 19px; font-weight: 700; color: #e0e0ec; line-height: 1.2;
+  margin: 2px 0 8px;
+}
+.lib-unused { font-size: 13px; color: var(--fg-faint); font-style: italic; }
+
+.lib-programs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.lib-programs-label {
+  font-family: var(--font-display);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--fg-faint); margin-right: 4px;
+}
+.lib-program {
+  display: inline-flex; align-items: baseline; gap: 6px; max-width: 100%;
+  font-family: var(--font-body); font-size: 13px;
+  color: #c0c0e0; background: #16162a; border: 1px solid #24243a;
+  padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: all 0.15s;
+}
+.lib-program:hover { color: var(--fg); border-color: #3a3a60; background: #1c1c36; }
+.lib-program-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lib-program-athlete { font-size: 12px; color: var(--fg-muted); white-space: nowrap; }
+.lib-program-uses { font-size: 11px; color: #d0b060; font-weight: 600; }
+
+@media (max-width: 640px) {
+  .lib-toolbar { flex-direction: column; align-items: stretch; }
+  .lib-search { min-width: 0; }
+  .lib-search .field-input { font-size: 16px; }   /* stops iOS zooming on focus */
+  .lib-item { gap: 12px; padding: 14px 12px; }
+  .lib-play { width: 44px; height: 44px; }
+  .lib-name { font-size: 17px; }
+  .lib-programs-label { flex-basis: 100%; }
+}
