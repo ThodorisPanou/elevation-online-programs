@@ -5,7 +5,7 @@
 // Receives everything it needs from useEditProgram — pure render component.
 
 import { UIDay, UIBlockExercise } from '@/lib/viewModels/EditProgramViewModel'
-import { uploadExerciseVideo, removeExerciseVideo } from '@/lib/services/exerciseService'
+import { uploadExerciseVideo, removeExerciseVideo, UploadPhase } from '@/lib/services/exerciseService'
 import { useEffect, useRef, useState } from 'react'
 import { ExerciseCatalogueItem } from '@/lib/viewModels/ExerciseViewModel'
 import Modal from '@/components/modal'
@@ -324,6 +324,7 @@ function ExerciseRow({
 }) {
   const [uploading,  setUploading]  = useState(false)
   const [progress,   setProgress]   = useState(0)
+  const [phase,      setPhase]      = useState<UploadPhase>('upload')
   const [removing,   setRemoving]   = useState(false)
   const [uploadErr,  setUploadErr]  = useState<string | null>(null)
   const [showNotes,  setShowNotes]  = useState(!!be.notes)
@@ -353,7 +354,7 @@ function ExerciseRow({
     setProgress(0)
     setUploadErr(null)
     try {
-      const url = await uploadExerciseVideo(be.exerciseId, file, (pct) => setProgress(pct))
+      const url = await uploadExerciseVideo(be.exerciseId, file, (pct, p) => { setProgress(pct); setPhase(p) })
       onVideoUploaded(url)
     } catch (err: any) {
       setUploadErr(err.message ?? 'Upload failed')
@@ -406,7 +407,7 @@ function ExerciseRow({
                 } : undefined}
               >
                 {uploading
-                  ? `${progress}%`
+                  ? phase === 'compress' ? `Compressing ${progress}%` : `${progress}%`
                   : hasVideo
                     ? <><Play size={11} aria-hidden /> Video</>
                     : <><Upload size={11} aria-hidden /> Video</>}
