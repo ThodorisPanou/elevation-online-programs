@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { useEditProgram } from '@/lib/hooks/useEditProgram'
 import { useExercises } from '@/lib/hooks/useExercises'
 import ProgramEditor from '@/components/programEditor'
+import { Loader } from '@/components/pageStatus'
 
 export default function EditProgramPage() {
   const router    = useRouter()
@@ -34,13 +35,7 @@ export default function EditProgramPage() {
     })
   }, [])
 
-  if (loading) return (
-    <>
-<div className="loader">
-        <div className="loader-dot"/><div className="loader-dot"/><div className="loader-dot"/>
-      </div>
-    </>
-  )
+  if (loading) return <Loader />
 
   return (
     <ProgramEditor

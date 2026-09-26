@@ -1,0 +1,196 @@
+/* Shared UI primitives used across the app.
+   Page-specific styles live next to the page/component that uses them. */
+
+/* ── Keyframes ─────────────────────────────────────────────────────────── */
+
+@keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeUp  { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes shimmer { to { background-position: -200% 0; } }
+@keyframes bounce  { to { transform: translateY(-12px); opacity: 0.4; } }
+
+/* ── Layout ────────────────────────────────────────────────────────────── */
+
+.page {
+  font-family: var(--font-body);
+  background: var(--bg); color: var(--fg);
+  min-height: 100vh;
+}
+
+.header {
+  position: sticky; top: 0; z-index: 50;
+  height: var(--header-height); padding: 0 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(13,13,15,0.92); backdrop-filter: blur(12px);
+  border-bottom: 1px solid #1f1f26;
+}
+.header-left  { display: flex; align-items: center; gap: 16px; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+
+.page-body { max-width: 860px; margin: 0 auto; padding: 36px 24px 80px; }
+
+/* ── Typography ────────────────────────────────────────────────────────── */
+
+.eyebrow {
+  font-family: var(--font-display);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--fg-muted); margin-bottom: 10px;
+}
+
+.pill {
+  font-family: var(--font-display);
+  font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--fg-muted); background: #16161e; border: 1px solid var(--border-strong);
+  padding: 4px 10px; border-radius: 20px;
+}
+.pill span { color: #a0a0c0; margin-left: 4px; }
+
+/* ── Buttons ───────────────────────────────────────────────────────────── */
+/* Each variant only sets colors via custom properties; .btn does the rest.
+   With no variant, .btn is the neutral (cancel) style. */
+
+.btn {
+  --btn-bg: #1a1a22;       --btn-fg: #6a6a7a;       --btn-border: #2a2a36;
+  --btn-bg-hover: #22222e; --btn-fg-hover: var(--fg); --btn-border-hover: #2a2a36;
+
+  font-family: var(--font-display);
+  font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  background: var(--btn-bg); color: var(--btn-fg); border: 1px solid var(--btn-border);
+  padding: 7px 16px; border-radius: 8px; cursor: pointer; white-space: nowrap;
+  transition: all 0.15s;
+}
+.btn:hover:not(:disabled) {
+  background: var(--btn-bg-hover); color: var(--btn-fg-hover); border-color: var(--btn-border-hover);
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary {
+  --btn-bg: var(--accent);       --btn-fg: var(--bg);       --btn-border: var(--accent);
+  --btn-bg-hover: var(--accent-hover); --btn-fg-hover: var(--bg); --btn-border-hover: var(--accent-hover);
+  font-size: 14px; padding: 7px 21px;
+}
+.btn-primary:hover:not(:disabled) { transform: translateY(-1px); }
+.btn-primary:disabled { --btn-bg: #2a2a35; --btn-fg: var(--fg-muted); --btn-border: #2a2a35; opacity: 1; }
+
+.btn-view   { --btn-bg: #16162a; --btn-fg: #8888cc; --btn-border: #22223a; --btn-bg-hover: #1e1e3a; --btn-fg-hover: #aaaae8; --btn-border-hover: #3a3a60; }
+.btn-edit   { --btn-bg: #1a1e0a; --btn-fg: #b0c040; --btn-border: #2a3010; --btn-bg-hover: #222810; --btn-fg-hover: var(--accent); --btn-border-hover: #4a5818; }
+.btn-share  { --btn-bg: #12120e; --btn-fg: #808040; --btn-border: #282810; --btn-bg-hover: #1a1a10; --btn-fg-hover: #c0c060; --btn-border-hover: #484820; }
+.btn-copy   { --btn-bg: #0e1a1a; --btn-fg: #409090; --btn-border: #1a3030; --btn-bg-hover: #122020; --btn-fg-hover: #60c0c0; --btn-border-hover: #2a5050; }
+.btn-teal   { --btn-bg: #0e2a2a; --btn-fg: #40c0c0; --btn-border: #1a5050; --btn-bg-hover: #123434; --btn-fg-hover: #60e0e0; --btn-border-hover: #2a7070; }
+.btn-delete { --btn-bg: #1a0f0f; --btn-fg: #804040; --btn-border: #2a1a1a; --btn-bg-hover: #2a1010; --btn-fg-hover: var(--danger); --btn-border-hover: #5a2020; }
+.btn-danger { --btn-bg: #3a1010; --btn-fg: #ff6060; --btn-border: #5a2020; --btn-bg-hover: #4a1414; --btn-fg-hover: #ff8888; --btn-border-hover: #7a2828; }
+.btn-success { --btn-bg: #0e1a0e; --btn-fg: #60c060; --btn-border: #205020; --btn-bg-hover: #0e1a0e; --btn-fg-hover: #60c060; --btn-border-hover: #205020; }
+
+.btn-back {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--font-display);
+  font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+  color: #6b6b7a; background: none; border: none; cursor: pointer;
+  padding: 6px 10px; border-radius: 6px; transition: color 0.15s, background 0.15s;
+}
+.btn-back:hover { color: var(--fg); background: #1a1a22; }
+
+/* ── Avatar ────────────────────────────────────────────────────────────── */
+
+.avatar {
+  width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  background: #1a1a2a; border: 2px solid #2a2a3a;
+  font-family: var(--font-display); font-size: 16px; font-weight: 800; color: #4a4a6a;
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.avatar-sm { width: 32px; height: 32px; font-size: 12px; }
+.avatar-lg { width: 60px; height: 60px; font-size: 20px; }
+
+/* ── Feedback: errors, skeletons, empty states, loader, 404 ────────────── */
+
+.alert-error {
+  display: flex; align-items: center; gap: 8px;
+  background: #2a0f0f; border: 1px solid #5a1a1a; border-radius: 8px;
+  padding: 10px 14px; margin-bottom: 20px; font-size: 13px; color: var(--danger);
+}
+
+.skeleton {
+  height: 72px; border-radius: 12px;
+  background: linear-gradient(90deg, #16161e 25%, #1e1e28 50%, #16161e 75%);
+  background-size: 200% 100%; animation: shimmer 1.4s infinite;
+}
+
+.empty-state {
+  text-align: center; padding: 64px 24px;
+  border: 1px dashed var(--border-strong); border-radius: 12px;
+}
+.empty-state-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.3; }
+.empty-state-title {
+  font-family: var(--font-display);
+  font-size: 18px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--fg-faint); margin-bottom: 6px;
+}
+.empty-state-sub { font-size: 13px; color: var(--fg-ghost); }
+
+.loader {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 100vh; background: var(--bg);
+}
+.loader-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+  animation: bounce 0.8s infinite alternate;
+}
+.loader-dot:nth-child(2) { animation-delay: 0.2s; }
+.loader-dot:nth-child(3) { animation-delay: 0.4s; }
+
+.not-found {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  min-height: 100vh; background: var(--bg); font-family: var(--font-display);
+}
+.not-found-code { font-size: 80px; font-weight: 800; color: var(--border-strong); }
+.not-found-msg  { font-size: 20px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-faint); }
+
+/* ── Blocks (shared by editor and program view) ────────────────────────── */
+
+.block-dot { width: 6px; height: 6px; border-radius: 50%; background: #4a4aaa; flex-shrink: 0; }
+
+/* ── Modal ─────────────────────────────────────────────────────────────── */
+
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+  background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
+  animation: fadeIn 0.15s ease;
+}
+.modal {
+  width: 100%; max-width: 440px; padding: 28px;
+  background: #141418; border: 1px solid #22222e; border-radius: 16px;
+  animation: slideUp 0.2s ease;
+}
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 22px; font-weight: 800; color: var(--fg); margin-bottom: 8px;
+}
+.modal-text { font-size: 14px; color: #6a6a7a; line-height: 1.5; margin-bottom: 8px; }
+.modal-text strong { color: #c0c0e0; }
+.modal .alert-error { margin: 12px 0 0; padding: 8px 12px; }
+.modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+.modal-actions .btn { flex: 1; padding: 10px; font-size: 14px; }
+
+/* ── Form fields ───────────────────────────────────────────────────────── */
+
+.field { margin-bottom: 14px; }
+.field-label {
+  display: block; margin-bottom: 6px;
+  font-family: var(--font-display);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--fg-muted);
+}
+.field-hint { color: var(--fg-ghost); font-weight: 400; }
+.field-input {
+  width: 100%; padding: 10px 12px; border-radius: 8px; outline: none;
+  background: #0d0d12; border: 1px solid #1e1e2e; color: var(--fg);
+  font-family: var(--font-body); font-size: 14px;
+  transition: border-color 0.15s;
+}
+.field-input::placeholder { color: var(--fg-ghost); }
+.field-input:focus { border-color: #e8ff4a55; }
+textarea.field-input { resize: vertical; min-height: 72px; }
+select.field-input { cursor: pointer; }
+select.field-input option { background: #141418; }
