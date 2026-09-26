@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { getAllAthletes, createAthlete } from '@/lib/services/athleteService'
 import { AthleteListItemViewModel } from '@/lib/viewModels/AthleteViewModel'
 import Modal from '@/components/modal'
-import { ChevronRight, LogOut, Plus, TriangleAlert, Users, Video } from 'lucide-react'
+import { ChartColumn, ChevronRight, LogOut, Plus, TriangleAlert, Users, Video } from 'lucide-react'
 import './athletes.css'
 
 export default function AthletesPage() {
@@ -76,6 +76,9 @@ export default function AthletesPage() {
           <div className="header-right">
             <button className="btn" onClick={() => router.push('/admin/exercises')}>
               <Video size={15} aria-hidden /> <span className="btn-exercises-label">Exercises</span>
+            </button>
+            <button className="btn" onClick={() => router.push('/admin/analytics')}>
+              <ChartColumn size={15} aria-hidden /> <span className="btn-exercises-label">Analytics</span>
             </button>
             <button className="btn btn-primary" onClick={openModal}>
               <Plus size={16} aria-hidden /> New Athlete
