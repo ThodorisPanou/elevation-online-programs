@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ExerciseCatalogueItem } from '@/lib/viewModels/ExerciseViewModel'
 import Modal from '@/components/modal'
 import { SortableItem, SortableList } from '@/components/sortable'
+import ExercisePicker from '@/components/exercisePicker'
 import { ArrowLeft, Play, Plus, StickyNote, Trash2, TriangleAlert, Upload, X } from 'lucide-react'
 import './programEditor.css'
 
@@ -41,6 +42,7 @@ interface ProgramEditorProps {
   removeExercise: (dayTempId: string, blockTempId: string, idx: number) => void
   updateExField:     (dayTempId: string, blockTempId: string, idx: number, field: keyof UIBlockExercise, value: string) => void
   resolveExerciseId: (dayTempId: string, blockTempId: string, idx: number, name: string) => void
+  selectExercise: (dayTempId: string, blockTempId: string, idx: number, item: ExerciseCatalogueItem) => void
   moveExercise:   (dayTempId: string, blockTempId: string, activeTempId: string, overTempId: string) => void
   onSave:         () => void
   onBack:         () => void
@@ -64,7 +66,7 @@ export default function ProgramEditor({
   setTitle, setDescription, addDay, removeDay, updateDayName, moveDay,
   addBlock, removeBlock, updateBlockName, moveBlock,
   addExercise, removeExercise, updateExField, moveExercise,
-  resolveExerciseId,
+  resolveExerciseId, selectExercise,
   onSave, onBack,
 }: ProgramEditorProps) {
   const [pending, setPending] = useState<PendingConfirm | null>(null)
@@ -230,10 +232,12 @@ export default function ProgramEditor({
                                                   key={be._tempId}
                                                   be={be}
                                                   idx={idx}
+                                                  catalogue={catalogue}
                                                   dayTempId={day._tempId}
                                                   blockTempId={block._tempId}
                                                   updateExField={updateExField}
                                                   resolveExerciseId={resolveExerciseId}
+                                                  selectExercise={selectExercise}
                                                   removeExercise={removeExercise}
                                                   onAddNext={() => addExercise(day._tempId, block._tempId)}
                                                   onVideoUploaded={(url) => updateExField(day._tempId, block._tempId, idx, 'video_url', url)}
@@ -264,10 +268,6 @@ export default function ProgramEditor({
           </div>
         </main>
       </div>
-
-      <datalist id="exList">
-        {catalogue.map(ex => <option key={ex.id} value={ex.name} />)}
-      </datalist>
 
       {pending && (
         <Modal
@@ -306,15 +306,17 @@ export default function ProgramEditor({
 // Handles its own upload state to avoid re-rendering the whole editor on upload.
 
 function ExerciseRow({
-  be, idx, dayTempId, blockTempId,
-  updateExField, resolveExerciseId, removeExercise, onAddNext, onVideoUploaded, onVideoRemoved,
+  be, idx, catalogue, dayTempId, blockTempId,
+  updateExField, resolveExerciseId, selectExercise, removeExercise, onAddNext, onVideoUploaded, onVideoRemoved,
 }: {
   be:                UIBlockExercise
   idx:               number
+  catalogue:         ExerciseCatalogueItem[]
   dayTempId:         string
   blockTempId:       string
   updateExField:     (d: string, b: string, i: number, f: keyof UIBlockExercise, v: string) => void
   resolveExerciseId: (d: string, b: string, i: number, name: string) => void
+  selectExercise:    (d: string, b: string, i: number, item: ExerciseCatalogueItem) => void
   removeExercise:    (d: string, b: string, i: number) => void
   onAddNext:         () => void
   onVideoUploaded:   (url: string) => void
@@ -376,15 +378,14 @@ function ExerciseRow({
         <>
           <div className="exercise-row">
             {handle}
-            <input
-              list="exList"
-              className="ex-input ex-name-input"
-              aria-label="Exercise"
+            <ExercisePicker
               value={be.exerciseName || ''}
-              placeholder="Search exercise…"
+              selectedId={be.exerciseId}
+              catalogue={catalogue}
               autoFocus={isNew}
-              onChange={set('exerciseName')}
-              onBlur={e => resolveExerciseId(dayTempId, blockTempId, idx, e.target.value)}
+              onChange={name => updateExField(dayTempId, blockTempId, idx, 'exerciseName', name)}
+              onSelect={item => selectExercise(dayTempId, blockTempId, idx, item)}
+              onCommit={name => resolveExerciseId(dayTempId, blockTempId, idx, name)}
             />
 
             {/* Video upload/delete cell */}
@@ -471,7 +472,7 @@ function ExerciseRow({
           )}
 
           {name && !canUpload && (
-            <div className="ex-hint">New exercise — it&apos;s added to the catalogue when you save. Save first to attach a video.</div>
+            <div className="ex-hint ex-hint-new">New exercise — it&apos;s added to the catalogue when you save. Save first to attach a video.</div>
           )}
           {uploadErr && (
             <div className="ex-hint ex-hint-error" role="alert">

@@ -33,7 +33,7 @@ export default function NewProgramPage() {
       saveLabel="Create Program"
       breadcrumb="New Program"
       onSave={editor.save}
-      onBack={() => router.back()}
+      onBack={() => router.push(`/admin/programs/${athleteId}`)}
     />
   )
 }

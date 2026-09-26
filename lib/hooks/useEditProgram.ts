@@ -46,16 +46,27 @@ interface UseEditProgramResult {
   removeExercise:   (dayTempId: string, blockTempId: string, idx: number) => void
   updateExField:    (dayTempId: string, blockTempId: string, idx: number, field: keyof UIBlockExercise, value: string) => void
   resolveExerciseId: (dayTempId: string, blockTempId: string, idx: number, name: string) => void
+  selectExercise:   (dayTempId: string, blockTempId: string, idx: number, item: CatalogueItem) => void
   moveExercise:     (dayTempId: string, blockTempId: string, activeTempId: string, overTempId: string) => void
   // Save
   save:             () => Promise<void>
+}
+
+type CatalogueItem = { id: string; name: string; video_url?: string }
+
+// The catalogue can hold names that differ only by case (or are identical).
+// Prefer an exact-case match, then any case-insensitive match with a video.
+function matchByName(catalogue: CatalogueItem[], name: string): CatalogueItem | undefined {
+  const exact = catalogue.filter(e => e.name === name)
+  const loose = exact.length ? exact : catalogue.filter(e => e.name.toLowerCase() === name.toLowerCase())
+  return loose.find(e => e.video_url) ?? loose[0]
 }
 
 interface UseEditProgramOptions {
   athleteId:  string
   programId?: string          // undefined = new program mode
   onSuccess:  (athleteId: string) => void
-  catalogue:  { id: string; name: string; video_url?: string }[]
+  catalogue:  CatalogueItem[]
 }
 
 export function useEditProgram({
@@ -229,7 +240,7 @@ export function useEditProgram({
             exercises: b.exercises.map((ex, i) => {
               if (i !== idx) return ex
               if (field === 'exerciseName') {
-                const matched = catalogueRef.current.find(e => e.name.toLowerCase() === value.toLowerCase())
+                const matched = matchByName(catalogueRef.current, value)
                 return {
                   ...ex,
                   exerciseName: value,
@@ -252,7 +263,7 @@ export function useEditProgram({
     idx:         number,
     name:        string,
   ) => {
-    const matched = catalogueRef.current.find(e => e.name.toLowerCase() === name.toLowerCase())
+    const matched = matchByName(catalogueRef.current, name)
     if (!matched) return
     setDays(prev => prev.map(d => {
       if (d._tempId !== dayTempId) return d
@@ -262,19 +273,45 @@ export function useEditProgram({
           if (b._tempId !== blockTempId) return b
           return {
             ...b,
-            exercises: b.exercises.map((ex, i) =>
-              i === idx ? {
+            exercises: b.exercises.map((ex, i) => {
+              if (i !== idx) return ex
+              // Keep an exercise picked by id if its name still matches — it may be
+              // one of several catalogue entries sharing this name
+              const current = catalogueRef.current.find(e => e.id === ex.exerciseId)
+              if (current && current.name.toLowerCase() === name.toLowerCase()) return ex
+              return {
                 ...ex,
                 exerciseName: matched.name,
                 exerciseId:   matched.id,
                 video_url:    matched.video_url ?? undefined,
-              } : ex
-            ),
+              }
+            }),
           }
         }),
       }
     }))
   }
+
+  // Picked from the exercise picker: use that exact catalogue entry
+  const selectExercise = (dayTempId: string, blockTempId: string, idx: number, item: CatalogueItem) =>
+    setDays(prev => prev.map(d => {
+      if (d._tempId !== dayTempId) return d
+      return {
+        ...d,
+        blocks: d.blocks.map(b => {
+          if (b._tempId !== blockTempId) return b
+          return {
+            ...b,
+            exercises: b.exercises.map((ex, i) => i !== idx ? ex : {
+              ...ex,
+              exerciseName: item.name,
+              exerciseId:   item.id,
+              video_url:    item.video_url ?? undefined,
+            }),
+          }
+        }),
+      }
+    }))
 
   // ── Save ──────────────────────────────────────────────────────────────────
 
@@ -325,6 +362,7 @@ export function useEditProgram({
     removeExercise,
     updateExField,
     resolveExerciseId,
+    selectExercise,
     moveExercise,
     save,
   }
