@@ -29,7 +29,18 @@
 
 .page-body { max-width: 860px; margin: 0 auto; padding: 36px 24px 80px; }
 
+@media (max-width: 640px) {
+  .header    { padding: 0 16px; }
+  .page-body { padding: 24px 16px 64px; }
+}
+
 /* ── Typography ────────────────────────────────────────────────────────── */
+
+.logo {
+  font-family: var(--font-display);
+  font-size: 18px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--accent);
+}
 
 .eyebrow {
   font-family: var(--font-display);
@@ -43,19 +54,20 @@
   color: var(--fg-muted); background: #16161e; border: 1px solid var(--border-strong);
   padding: 4px 10px; border-radius: 20px;
 }
-.pill span { color: #a0a0c0; margin-left: 4px; }
+.pill span { color: #c0c0dc; margin-left: 4px; }
 
 /* ── Buttons ───────────────────────────────────────────────────────────── */
 /* Each variant only sets colors via custom properties; .btn does the rest.
    With no variant, .btn is the neutral (cancel) style. */
 
 .btn {
-  --btn-bg: #1a1a22;       --btn-fg: #6a6a7a;       --btn-border: #2a2a36;
+  --btn-bg: #1a1a22;       --btn-fg: #9a9aac;       --btn-border: #2a2a36;
   --btn-bg-hover: #22222e; --btn-fg-hover: var(--fg); --btn-border-hover: #2a2a36;
 
   font-family: var(--font-display);
   font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
   background: var(--btn-bg); color: var(--btn-fg); border: 1px solid var(--btn-border);
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   padding: 7px 16px; border-radius: 8px; cursor: pointer; white-space: nowrap;
   transition: all 0.15s;
 }
@@ -85,7 +97,7 @@
   display: flex; align-items: center; gap: 6px;
   font-family: var(--font-display);
   font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
-  color: #6b6b7a; background: none; border: none; cursor: pointer;
+  color: var(--fg-muted); background: none; border: none; cursor: pointer;
   padding: 6px 10px; border-radius: 6px; transition: color 0.15s, background 0.15s;
 }
 .btn-back:hover { color: var(--fg); background: #1a1a22; }
@@ -96,7 +108,7 @@
   width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center; overflow: hidden;
   background: #1a1a2a; border: 2px solid #2a2a3a;
-  font-family: var(--font-display); font-size: 16px; font-weight: 800; color: #4a4a6a;
+  font-family: var(--font-display); font-size: 16px; font-weight: 800; color: #8a8ab0;
 }
 .avatar img { width: 100%; height: 100%; object-fit: cover; }
 .avatar-sm { width: 32px; height: 32px; font-size: 12px; }
@@ -109,6 +121,7 @@
   background: #2a0f0f; border: 1px solid #5a1a1a; border-radius: 8px;
   padding: 10px 14px; margin-bottom: 20px; font-size: 13px; color: var(--danger);
 }
+.alert-error svg { flex-shrink: 0; }
 
 .skeleton {
   height: 72px; border-radius: 12px;
@@ -120,7 +133,7 @@
   text-align: center; padding: 64px 24px;
   border: 1px dashed var(--border-strong); border-radius: 12px;
 }
-.empty-state-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.3; }
+.empty-state-icon { display: flex; justify-content: center; margin-bottom: 12px; color: var(--fg-ghost); }
 .empty-state-title {
   font-family: var(--font-display);
   font-size: 18px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
@@ -159,7 +172,8 @@
   animation: fadeIn 0.15s ease;
 }
 .modal {
-  width: 100%; max-width: 440px; padding: 28px;
+  width: 100%; max-width: 440px; padding: 28px; outline: none;
+  max-height: calc(100vh - 48px); overflow-y: auto;
   background: #141418; border: 1px solid #22222e; border-radius: 16px;
   animation: slideUp 0.2s ease;
 }
@@ -167,7 +181,7 @@
   font-family: var(--font-display);
   font-size: 22px; font-weight: 800; color: var(--fg); margin-bottom: 8px;
 }
-.modal-text { font-size: 14px; color: #6a6a7a; line-height: 1.5; margin-bottom: 8px; }
+.modal-text { font-size: 14px; color: #9a9aac; line-height: 1.5; margin-bottom: 8px; }
 .modal-text strong { color: #c0c0e0; }
 .modal .alert-error { margin: 12px 0 0; padding: 8px 12px; }
 .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
@@ -190,7 +204,44 @@
   transition: border-color 0.15s;
 }
 .field-input::placeholder { color: var(--fg-ghost); }
-.field-input:focus { border-color: #e8ff4a55; }
+.field-input:focus { border-color: #e8ff4a88; }
+/* Keep browser autofill from painting fields light blue */
+.field-input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 100px #0d0d12 inset;
+  -webkit-text-fill-color: var(--fg);
+  caret-color: var(--fg);
+}
 textarea.field-input { resize: vertical; min-height: 72px; }
 select.field-input { cursor: pointer; }
 select.field-input option { background: #141418; }
+
+/* ── Icon button (×, ⋯, grip…) ─────────────────────────────────────────── */
+
+.btn-icon {
+  width: 32px; height: 32px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: none; border: 1px solid transparent; border-radius: 6px;
+  color: var(--fg-faint); cursor: pointer; transition: all 0.15s;
+}
+.btn-icon:hover { color: var(--fg); background: #1a1a22; }
+.btn-icon.danger:hover { color: #ff6060; border-color: #3a1a1a; background: #1a1010; }
+
+/* ── Dropdown menu ─────────────────────────────────────────────────────── */
+
+.menu-wrap { position: relative; }
+.menu {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 60;
+  min-width: 190px; padding: 6px;
+  background: #16161c; border: 1px solid #26263a; border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+  animation: fadeIn 0.12s ease;
+}
+.menu-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 9px 10px; border-radius: 6px;
+  background: none; border: none; cursor: pointer; text-align: left;
+  font-family: var(--font-body); font-size: 14px; color: #c8c8dc;
+}
+.menu-item:hover, .menu-item:focus-visible { background: #20202c; color: var(--fg); }
+.menu-item.danger { color: #ff8080; }
+.menu-item.danger:hover, .menu-item.danger:focus-visible { background: #2a1212; }

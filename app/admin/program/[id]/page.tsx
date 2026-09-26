@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { useProgram } from '@/lib/hooks/useProgram'
 import { Loader, NotFound } from '@/components/pageStatus'
 import { ProgramHero, ProgramDays } from '@/components/programView'
+import { ArrowLeft, Pencil } from 'lucide-react'
 
 export default function AdminProgramPage() {
   const router = useRouter()
@@ -26,12 +27,12 @@ export default function AdminProgramPage() {
   return (
     <div className="page">
       <header className="header">
-        <button className="btn-back" onClick={() => router.back()}>← Back</button>
+        <button className="btn-back" onClick={() => router.back()}><ArrowLeft size={16} aria-hidden /> Back</button>
         <button
           className="btn btn-edit"
           onClick={() => router.push(`/admin/programs/${program.athlete?.id ?? ''}/edit/${program.id}`)}
         >
-          Edit Program
+          <Pencil size={14} aria-hidden /> Edit Program
         </button>
       </header>
 

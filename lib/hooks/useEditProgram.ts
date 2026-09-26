@@ -1,7 +1,7 @@
 // lib/hooks/useEditProgram.ts
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { arrayMove } from '@dnd-kit/sortable'
 import { getProgramRawById, createProgram, updateProgram } from '@/lib/services/programService'
 import {
   EditProgramViewModel,
@@ -27,6 +27,7 @@ interface UseEditProgramResult {
   // Derived
   visibleDays:      UIDay[]
   totalExercises:   number
+  dirty:            boolean   // unsaved changes since load / last save
   // Title
   setTitle:         (title: string) => void
   setDescription:   (desc: string) => void
@@ -34,15 +35,18 @@ interface UseEditProgramResult {
   addDay:           () => void
   removeDay:        (tempId: string) => void
   updateDayName:    (tempId: string, name: string) => void
+  moveDay:          (activeTempId: string, overTempId: string) => void
   // Block actions
   addBlock:         (dayTempId: string) => void
   removeBlock:      (dayTempId: string, blockTempId: string) => void
   updateBlockName:  (dayTempId: string, blockTempId: string, name: string) => void
+  moveBlock:        (dayTempId: string, activeTempId: string, overTempId: string) => void
   // Exercise actions
   addExercise:      (dayTempId: string, blockTempId: string) => void
   removeExercise:   (dayTempId: string, blockTempId: string, idx: number) => void
   updateExField:    (dayTempId: string, blockTempId: string, idx: number, field: keyof UIBlockExercise, value: string) => void
   resolveExerciseId: (dayTempId: string, blockTempId: string, idx: number, name: string) => void
+  moveExercise:     (dayTempId: string, blockTempId: string, activeTempId: string, overTempId: string) => void
   // Save
   save:             () => Promise<void>
 }
@@ -72,6 +76,10 @@ export function useEditProgram({
   const [loading, setLoading] = useState(!!programId)  // only loading if editing
   const [error,   setError]   = useState<string | null>(null)
 
+  // Snapshot of the last loaded/saved state; anything different is unsaved
+  const snapshot = (t: string, d: string, ds: UIDay[]) => JSON.stringify({ t, d, ds })
+  const [saved, setSaved] = useState(() => snapshot('', '', []))
+
   // Load existing program when in edit mode
   useEffect(() => {
     if (!programId) { setLoading(false); return }
@@ -91,6 +99,7 @@ export function useEditProgram({
         setTitle(vm.title)
         setDescription(vm.description ?? '')
         setDays(vm.days)
+        setSaved(snapshot(vm.title, vm.description ?? '', vm.days))
       }
 
       setLoading(false)
@@ -115,6 +124,34 @@ export function useEditProgram({
 
   const updateDayName = (tempId: string, name: string) =>
     setDays(prev => prev.map(d => d._tempId === tempId ? { ...d, name } : d))
+
+  // ── Reordering ────────────────────────────────────────────────────────────
+  // Arrays still contain soft-deleted items; moving by tempId within the full
+  // array is fine because save() derives order_index from array position.
+
+  const move = <T extends { _tempId: string }>(items: T[], activeId: string, overId: string): T[] => {
+    const from = items.findIndex(i => i._tempId === activeId)
+    const to   = items.findIndex(i => i._tempId === overId)
+    return from < 0 || to < 0 ? items : arrayMove(items, from, to)
+  }
+
+  const moveDay = (activeId: string, overId: string) =>
+    setDays(prev => move(prev, activeId, overId))
+
+  const moveBlock = (dayTempId: string, activeId: string, overId: string) =>
+    setDays(prev => prev.map(d =>
+      d._tempId !== dayTempId ? d : { ...d, blocks: move(d.blocks, activeId, overId) }
+    ))
+
+  const moveExercise = (dayTempId: string, blockTempId: string, activeId: string, overId: string) =>
+    setDays(prev => prev.map(d =>
+      d._tempId !== dayTempId ? d : {
+        ...d,
+        blocks: d.blocks.map(b =>
+          b._tempId !== blockTempId ? b : { ...b, exercises: move(b.exercises, activeId, overId) }
+        ),
+      }
+    ))
 
   // ── Block mutations ───────────────────────────────────────────────────────
 
@@ -255,6 +292,7 @@ export function useEditProgram({
       } else {
         await createProgram(athleteId, vm)
       }
+      setSaved(snapshot(title, description, days))
       onSuccess(athleteId)
     } catch (e: any) {
       setError(e.message || 'Something went wrong')
@@ -272,18 +310,22 @@ export function useEditProgram({
     error,
     visibleDays:    getVisibleDays(days),
     totalExercises: getTotalExercises(days),
+    dirty:          !loading && snapshot(title, description, days) !== saved,
     setTitle,
     setDescription,
     addDay,
     removeDay,
     updateDayName,
+    moveDay,
     addBlock,
     removeBlock,
     updateBlockName,
+    moveBlock,
     addExercise,
     removeExercise,
     updateExField,
     resolveExerciseId,
+    moveExercise,
     save,
   }
 }

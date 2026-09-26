@@ -9,6 +9,7 @@
 
 export interface UIBlockExercise {
   id?:           string    // undefined = not yet persisted
+  _tempId:       string    // stable React key / drag id
   exerciseId?:   string
   exerciseName?: string
   video_url?:    string    // read from exercises.video_url — display only in editor
@@ -22,7 +23,7 @@ export interface UIBlockExercise {
 
 export interface UIBlock {
   id?:       string        // undefined = not yet persisted
-  _tempId:   string        // stable React key (uuid or Date.now())
+  _tempId:   string        // stable React key / drag id
   name:      string
   exercises: UIBlockExercise[]
   _deleted?: boolean
@@ -46,8 +47,17 @@ export interface EditProgramViewModel {
 // ─── Factory helpers ──────────────────────────────────────────────────────
 // Use these instead of inline object literals to ensure consistent defaults.
 
+// crypto.randomUUID is only available in secure contexts (https / localhost),
+// so fall back to a random string when the app is opened over plain http on the LAN.
+function newTempId(): string {
+  return typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+}
+
 export function createUIBlockExercise(): UIBlockExercise {
   return {
+    _tempId:      newTempId(),
     exerciseId:   '',
     exerciseName: '',
     sets:         '',
@@ -60,7 +70,7 @@ export function createUIBlockExercise(): UIBlockExercise {
 
 export function createUIBlock(existingCount: number): UIBlock {
   return {
-    _tempId:   Date.now().toString(),
+    _tempId:   newTempId(),
     name:      `Block ${existingCount + 1}`,
     exercises: [],
   }
@@ -68,7 +78,7 @@ export function createUIBlock(existingCount: number): UIBlock {
 
 export function createUIDay(existingCount: number): UIDay {
   return {
-    _tempId: Date.now().toString(),
+    _tempId: newTempId(),
     name:    `Day ${existingCount + 1}`,
     blocks:  [],
   }
@@ -98,6 +108,7 @@ export function mapToEditProgramViewModel(raw: any): EditProgramViewModel {
               .sort((a: any, b: any) => a.order_index - b.order_index)
               .map((be: any): UIBlockExercise => ({
                 id:           be.id,
+                _tempId:      be.id,
                 exerciseId:   be.exercises?.id,
                 exerciseName: be.exercises?.name      ?? '',
                 video_url:    be.exercises?.video_url ?? undefined,

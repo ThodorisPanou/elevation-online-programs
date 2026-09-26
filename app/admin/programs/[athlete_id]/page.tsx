@@ -6,7 +6,18 @@ import { supabase } from '@/lib/supabaseClient'
 import { useAthletePrograms } from '@/lib/hooks/useAthleteProgram'
 import { deleteProgram, copyProgram } from '@/lib/services/programService'
 import { getAllAthletes } from '@/lib/services/athleteService'
+import Modal from '@/components/modal'
+import Menu from '@/components/menu'
+import { ArrowLeft, Check, ClipboardList, Copy, Eye, Link, Pencil, Plus, Trash2, TriangleAlert } from 'lucide-react'
+import { ProgramViewModel } from '@/lib/viewModels/ProgramViewModel'
 import './programs.css'
+
+// "3 days · 24 exercises"
+function programStats(p: ProgramViewModel) {
+  const exercises = p.days.reduce((n, d) => n + d.blocks.reduce((m, b) => m + b.block_exercises.length, 0), 0)
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+  return `${plural(p.days.length, 'day')} · ${plural(exercises, 'exercise')}`
+}
 
 export default function AthleteProgramsPage() {
   const router    = useRouter()
@@ -101,9 +112,11 @@ export default function AthleteProgramsPage() {
     <>
       <div className="page">
         <header className="header">
-          <button className="btn-back" onClick={() => router.push('/admin/athletes')}>← Athletes</button>
+          <button className="btn-back" onClick={() => router.push('/admin/athletes')}>
+            <ArrowLeft size={16} aria-hidden /> Athletes
+          </button>
           <button className="btn btn-primary" onClick={() => router.push(`/admin/programs/${athleteId}/new`)}>
-            + New Program
+            <Plus size={16} aria-hidden /> New Program
           </button>
         </header>
 
@@ -116,13 +129,13 @@ export default function AthleteProgramsPage() {
               }
             </div>
             <div className="athlete-hero-info">
-              <div className="athlete-hero-name">{athlete?.fullName ?? '—'}</div>
+              <h1 className="athlete-hero-name">{athlete?.fullName ?? '—'}</h1>
               <div className="athlete-hero-sub">Training Programs</div>
             </div>
             <div className="pill">Programs<span>{programs.length}</span></div>
           </div>
 
-          {error && <div className="alert-error">⚠ {error}</div>}
+          {error && <div className="alert-error" role="alert"><TriangleAlert size={14} aria-hidden /> {error}</div>}
 
           <div className="eyebrow">All Programs</div>
 
@@ -131,7 +144,7 @@ export default function AthleteProgramsPage() {
             : programs.length === 0
               ? (
                 <div className="empty-state">
-                  <div className="empty-state-icon">📋</div>
+                  <div className="empty-state-icon"><ClipboardList size={36} aria-hidden /></div>
                   <div className="empty-state-title">No Programs Yet</div>
                   <div className="empty-state-sub">Create the first program for this athlete</div>
                 </div>
@@ -140,30 +153,38 @@ export default function AthleteProgramsPage() {
                 <div className="program-list">
                   {programs.map((p, i) => (
                     <div key={p.id} className="program-card" style={{ animationDelay:`${i*0.05}s` }}>
-                      <div className="prog-index">#{String(i+1).padStart(2,'0')}</div>
-                      <div className="prog-info">
-                        <div className="prog-title">{p.title}</div>
-                        <div className="prog-date">{fmt(p.created_at)}</div>
-                      </div>
+                      <button
+                        type="button"
+                        className="prog-main"
+                        onClick={() => router.push(`/admin/programs/${athleteId}/edit/${p.id}`)}
+                        aria-label={`Edit ${p.title}`}
+                      >
+                        <div className="prog-info">
+                          <div className="prog-title">{p.title}</div>
+                          <div className="prog-meta">{programStats(p)} · {fmt(p.created_at)}</div>
+                        </div>
+                        <Pencil className="prog-edit-icon" size={15} aria-hidden />
+                      </button>
                       <div className="prog-actions">
-                        <button className="btn btn-view" onClick={() => router.push(`/program/${p.public_token}`)}>
-                          View
-                        </button>
-                        <button className="btn btn-edit" onClick={() => router.push(`/admin/programs/${athleteId}/edit/${p.id}`)}>
-                          Edit
-                        </button>
                         <button
                           className={`btn ${copiedId === p.id ? 'btn-success' : 'btn-share'}`}
                           onClick={() => handleShareCopy(p.public_token, p.id)}
+                          aria-live="polite"
                         >
-                          {copiedId === p.id ? '✓ Copied!' : '🔗 Link'}
+                          {copiedId === p.id
+                            ? <><Check size={14} aria-hidden /> Copied</>
+                            : <><Link size={14} aria-hidden /> Link</>}
                         </button>
-                        <button className="btn btn-copy" onClick={() => openCopy(p.id, p.title)}>
-                          Copy
+                        <button className="btn btn-view" onClick={() => router.push(`/program/${p.public_token}`)}>
+                          <Eye size={14} aria-hidden /> View
                         </button>
-                        <button className="btn btn-delete" onClick={() => openConfirm(p.id, p.title)}>
-                          Delete
-                        </button>
+                        <Menu
+                          label={`More actions for ${p.title}`}
+                          items={[
+                            { label: 'Copy to athlete…', icon: <Copy size={15} aria-hidden />, onSelect: () => openCopy(p.id, p.title) },
+                            { label: 'Delete program',  icon: <Trash2 size={15} aria-hidden />, danger: true, onSelect: () => openConfirm(p.id, p.title) },
+                          ]}
+                        />
                       </div>
                     </div>
                   ))}
@@ -175,13 +196,13 @@ export default function AthleteProgramsPage() {
 
       {/* Copy Modal */}
       {copyId && (
-        <div className="modal-overlay" onClick={closeCopy}>
-          <div className="modal modal-teal" onClick={e => e.stopPropagation()}>
-            <div className="modal-icon">📋</div>
+        <Modal onClose={closeCopy} title="Copy Program" className="modal modal-teal">
+            <div className="modal-icon"><Copy size={20} aria-hidden /></div>
             <div className="modal-title">Copy Program</div>
             <div className="modal-text">Copying <strong>{copyTitle}</strong> to another athlete.</div>
-            <label className="field-label">Select Athlete</label>
+            <label className="field-label" htmlFor="copy-target">Select Athlete</label>
             <select
+              id="copy-target"
               className="field-input"
               value={copyTarget}
               onChange={e => setCopyTarget(e.target.value)}
@@ -194,27 +215,25 @@ export default function AthleteProgramsPage() {
             {allAthletes.length === 0 && (
               <div className="modal-note">No other athletes found.</div>
             )}
-            {copyError && <div className="alert-error">⚠ {copyError}</div>}
+            {copyError && <div className="alert-error" role="alert"><TriangleAlert size={14} aria-hidden /> {copyError}</div>}
             <div className="modal-actions">
               <button className="btn" onClick={closeCopy} disabled={copying}>Cancel</button>
               <button className="btn btn-teal" onClick={handleCopy} disabled={copying || !copyTarget}>
                 {copying ? 'Copying…' : 'Copy Program'}
               </button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Confirmation Modal */}
       {confirmId && (
-        <div className="modal-overlay" onClick={closeConfirm}>
-          <div className="modal modal-danger" onClick={e => e.stopPropagation()}>
-            <div className="modal-icon">🗑</div>
+        <Modal onClose={closeConfirm} title="Delete Program" className="modal modal-danger">
+            <div className="modal-icon"><Trash2 size={20} aria-hidden /></div>
             <div className="modal-title">Delete Program</div>
             <div className="modal-text">You are about to permanently delete:</div>
             <div className="modal-program-name">{confirmTitle}</div>
             <div className="modal-warning">This will also delete all days, blocks and exercises inside it. This cannot be undone.</div>
-            {deleteError && <div className="alert-error">⚠ {deleteError}</div>}
+            {deleteError && <div className="alert-error" role="alert"><TriangleAlert size={14} aria-hidden /> {deleteError}</div>}
             <div className="modal-actions">
               <button className="btn" onClick={closeConfirm} disabled={deleting}>
                 Cancel
@@ -223,8 +242,7 @@ export default function AthleteProgramsPage() {
                 {deleting ? 'Deleting…' : 'Yes, Delete'}
               </button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </>
   )

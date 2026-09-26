@@ -6,27 +6,53 @@
   color: var(--fg-faint);
 }
 
+.unsaved-dot {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-display);
+  font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: #d0b060;
+}
+.unsaved-dot::before {
+  content: ''; width: 7px; height: 7px; border-radius: 50%; background: #d0b060;
+}
+
 /* ── Title & description ── */
+
+label.eyebrow { display: block; }
 
 .editor-title {
   width: 100%; padding: 4px 0 10px; margin-bottom: 36px; outline: none;
-  font-family: var(--font-display); font-size: 36px; font-weight: 800;
+  font-family: var(--font-display); font-size: clamp(28px, 7vw, 36px); font-weight: 800;
   background: transparent; color: var(--fg);
   border: none; border-bottom: 2px solid var(--border-strong);
   transition: border-color 0.2s;
 }
-.editor-title::placeholder { color: #2a2a38; }
+.editor-title::placeholder { color: var(--fg-ghost); }
 .editor-title:focus { border-bottom-color: var(--accent); }
 
 .editor-description {
   width: 100%; padding: 4px 0 12px; margin-bottom: 32px; outline: none; resize: none;
   font-size: 15px; line-height: 1.5;
-  background: transparent; color: #8888aa;
+  background: transparent; color: #a8a8c4;
   border: none; border-bottom: 1px solid var(--border-strong);
   transition: border-color 0.2s;
 }
-.editor-description::placeholder { color: #2a2a38; }
-.editor-description:focus { border-bottom-color: #3a3a5a; }
+.editor-description::placeholder { color: var(--fg-ghost); }
+.editor-description:focus { border-bottom-color: #4a4a6a; }
+
+/* ── Drag handles (days, blocks, exercises) ── */
+
+.drag-handle {
+  width: 24px; height: 28px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; border-radius: 4px; padding: 0;
+  color: var(--fg-ghost); cursor: grab; touch-action: none;
+  transition: color 0.15s, background 0.15s;
+}
+.drag-handle:hover { color: var(--fg-muted); background: #1a1a24; }
+.drag-handle:active { cursor: grabbing; }
+
+.dragging { opacity: 0.85; box-shadow: 0 12px 32px rgba(0,0,0,0.55); }
 
 /* ── Days ── */
 
@@ -38,8 +64,8 @@
 }
 .editor-day:focus-within { border-color: #2a2a40; }
 .editor-day-header {
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px 16px; background: var(--surface-raised); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 12px 12px 8px; background: var(--surface-raised); border-bottom: 1px solid var(--border);
 }
 .editor-day-index {
   font-family: var(--font-display);
@@ -53,9 +79,9 @@
   background: transparent; border: none; color: var(--fg);
 }
 .editor-day-name::placeholder { color: var(--fg-ghost); }
-.editor-day-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.editor-day-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; }
 .editor-day-body { padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
-.editor-empty { font-size: 13px; color: var(--fg-ghost); font-style: italic; padding: 4px 0; }
+.editor-empty { font-size: 13px; color: var(--fg-faint); font-style: italic; padding: 4px 0; }
 
 .add-day-btn {
   display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -66,102 +92,151 @@
   font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
 }
 .add-day-btn:hover { border-color: #e8ff4a44; color: var(--accent); background: #12130a; }
-.add-day-plus { font-size: 18px; line-height: 1; }
 
 /* ── Blocks ── */
 
-.editor-block { background: #0d0d12; border: 1px solid #18182a; border-radius: 8px; overflow: hidden; }
+.editor-block { background: #0d0d12; border: 1px solid #1c1c2e; border-radius: 8px; overflow: hidden; }
 .editor-block-header {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 12px; border-bottom: 1px solid #18182a;
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 8px 8px 6px; border-bottom: 1px solid #1c1c2e;
 }
 .editor-block-name {
-  flex: 1; outline: none;
+  flex: 1; min-width: 0; outline: none;
   font-family: var(--font-display);
   font-size: 14px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-  background: transparent; border: none; color: #8888cc;
+  background: transparent; border: none; color: #9a9ae0;
 }
-.editor-block-name::placeholder { color: #222230; }
+.editor-block-name::placeholder { color: var(--fg-ghost); }
 
 .btn-add-block {
+  display: inline-flex; align-items: center; gap: 4px;
   font-family: var(--font-display);
   font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
-  color: #6a6aaa; background: #16162a; border: 1px solid #22223a;
+  color: #9a9ad8; background: #16162a; border: 1px solid #26263e;
   padding: 5px 12px; border-radius: 6px; cursor: pointer; transition: all 0.15s; white-space: nowrap;
 }
-.btn-add-block:hover { color: #aaaae8; background: #1e1e38; border-color: #2e2e50; }
+.btn-add-block:hover { color: #c0c0f0; background: #1e1e38; border-color: #2e2e50; }
 
 .btn-add-ex {
+  display: inline-flex; align-items: center; gap: 4px;
   font-family: var(--font-display);
   font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-  color: #4a4a6a; background: none; border: none;
-  padding: 3px 8px; border-radius: 4px; cursor: pointer; transition: color 0.15s;
+  color: #8a8ab8; background: none; border: none; white-space: nowrap;
+  padding: 5px 8px; border-radius: 4px; cursor: pointer; transition: color 0.15s, background 0.15s;
 }
-.btn-add-ex:hover { color: #8888cc; }
-
-.btn-icon {
-  width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
-  background: none; border: 1px solid transparent; border-radius: 6px;
-  color: var(--fg-faint); cursor: pointer; font-size: 16px; transition: all 0.15s;
-}
-.btn-icon:hover { color: #ff6060; border-color: #3a1a1a; background: #1a1010; }
+.btn-add-ex:hover { color: #c0c0f0; background: #16162a; }
 
 /* ── Exercise rows ── */
 
-.editor-exercises { padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; }
+.editor-exercises { padding: 8px 8px 10px 4px; display: flex; flex-direction: column; gap: 6px; }
 
 .ex-header-row,
 .exercise-row {
   display: grid; gap: 6px; align-items: center;
-  grid-template-columns: 1fr 90px 52px 52px 52px 52px 24px;
+  grid-template-columns: 24px 1fr 92px 54px 76px 54px 60px 68px;
 }
-.ex-header-row { padding-bottom: 4px; }
+.ex-header-row { padding-bottom: 2px; }
 .ex-col-label {
   font-family: var(--font-display);
   font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
-  color: #2e2e3e; text-align: center;
+  color: var(--fg-faint); text-align: center;
 }
-.ex-col-label:first-child { text-align: left; }
+.ex-col-label:nth-child(2) { text-align: left; }
+
+.exercise-item { display: flex; flex-direction: column; gap: 4px; border-radius: 6px; }
+.exercise-item.dragging { background: #13131c; }
 
 .ex-input {
-  width: 100%; padding: 6px 8px; border-radius: 6px; outline: none;
+  width: 100%; min-width: 0; padding: 6px 8px; border-radius: 6px; outline: none;
   font-family: var(--font-body); font-size: 13px;
-  background: #131320; border: 1px solid #1e1e2e; color: #c0c0d8;
+  background: #131320; border: 1px solid #22223a; color: #d0d0e4;
   transition: border-color 0.15s;
 }
 .ex-input::placeholder { color: var(--fg-ghost); font-size: 12px; }
-.ex-input:focus { border-color: #3a3a5a; }
+.ex-input:focus { border-color: #e8ff4a66; }
 .ex-input-sm { text-align: center; padding: 6px 4px; }
 
-.ex-remove {
-  width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
-  background: none; border: none; border-radius: 4px;
-  color: var(--fg-ghost); cursor: pointer; font-size: 14px; transition: color 0.15s;
+.ex-row-actions { display: flex; align-items: center; justify-content: flex-end; gap: 2px; }
+.ex-row-actions .btn-icon { width: 30px; height: 30px; }
+.btn-icon.btn-note.has-note { color: #d0b060; }
+
+/* Notes and hints sit under the row, aligned with the exercise name */
+.ex-notes-input { margin-left: 30px; width: calc(100% - 30px); font-size: 13px; }
+.ex-hint {
+  display: flex; align-items: center; gap: 6px;
+  margin-left: 30px; font-size: 12px; color: var(--fg-faint);
 }
-.ex-remove:hover { color: #ff6060; }
+.ex-hint-error { color: var(--danger); }
+.ex-hint-dismiss {
+  display: inline-flex; background: none; border: none; padding: 2px; border-radius: 4px;
+  color: inherit; cursor: pointer; opacity: 0.7;
+}
+.ex-hint-dismiss:hover { opacity: 1; }
 
 /* ── Video upload cell ── */
 
-.video-cell { display: flex; align-items: center; gap: 6px; }
+.video-cell { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .btn-upload-video {
-  display: flex; align-items: center; gap: 4px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px; flex: 1;
   font-family: var(--font-display);
   font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-  background: #12121e; color: #4a4a6a; border: 1px solid #1e1e32;
-  padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  background: #12121e; color: #8a8ab8; border: 1px solid #22223a;
+  padding: 5px 8px; border-radius: 6px; cursor: pointer; transition: all 0.15s; white-space: nowrap;
 }
-.btn-upload-video:hover { color: #8888cc; border-color: #3a3a5a; background: #18183a; }
-.btn-upload-video.has-video { color: #60c060; border-color: #1a3a1a; background: #101a10; }
-.btn-upload-video.has-video:hover { color: var(--danger); border-color: #3a1a1a; background: #1a1010; }
-.btn-upload-video.uploading { opacity: 0.5; cursor: not-allowed; }
-.btn-upload-video.in-progress { color: #80c080; border-color: #2a5a2a; }
+.btn-upload-video:hover:not(:disabled) { color: #c0c0f0; border-color: #3a3a5a; background: #18183a; }
+.btn-upload-video.has-video { color: #70c870; border-color: #1f4a1f; background: #101a10; }
+.btn-upload-video.has-video:hover:not(:disabled) { color: #90e090; border-color: #2a602a; background: #122012; }
+.btn-upload-video:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-upload-video.in-progress { opacity: 1; color: #90d090; border-color: #2a5a2a; }
 
 .btn-remove-video {
-  width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  background: none; border: 1px solid #3a1a1a; border-radius: 4px;
-  color: #6a3a3a; cursor: pointer; font-size: 13px; transition: all 0.15s;
+  width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  background: none; border: 1px solid #3a1a1a; border-radius: 4px; padding: 0;
+  color: #b06060; cursor: pointer; transition: all 0.15s;
 }
 .btn-remove-video:hover:not(:disabled) { color: #ff6060; border-color: #5a2020; background: #1a1010; }
 .btn-remove-video:disabled { opacity: 0.4; cursor: not-allowed; }
 
-.video-error { font-size: 10px; color: #ff6060; }
+/* ── Small screens ── */
+
+@media (max-width: 720px) {
+  .breadcrumb, .editor-pill { display: none; }
+
+  .editor-day-body { padding: 10px 8px 12px; }
+  .editor-exercises { padding: 8px 6px 10px 2px; gap: 0; }
+
+  /* Column headers are replaced by the inputs' placeholders */
+  .ex-header-row { display: none; }
+
+  /* Stack each exercise: name + actions / sets reps kg rest / video */
+  .exercise-row {
+    /* Reps gets extra room for schemes like "15-12-10" */
+    grid-template-columns: 24px minmax(0, 0.8fr) minmax(0, 1.5fr) minmax(0, 0.9fr) minmax(0, 0.9fr);
+    grid-template-areas:
+      "handle name  name name  actions"
+      ".      sets  reps kg    rest"
+      ".      video video video video";
+  }
+  .exercise-row > .drag-handle { grid-area: handle; }
+  .exercise-row > .ex-name-input { grid-area: name; font-size: 14px; }
+  .exercise-row > .ex-row-actions { grid-area: actions; }
+  .exercise-row > .ex-sets { grid-area: sets; }
+  .exercise-row > .ex-reps { grid-area: reps; }
+  .exercise-row > .ex-kg   { grid-area: kg; }
+  .exercise-row > .ex-rest { grid-area: rest; }
+  .exercise-row > .video-cell { grid-area: video; }
+
+  /* Divider between exercises (dnd-kit adds hidden nodes, so avoid :last-child) */
+  .exercise-item + .exercise-item {
+    margin-top: 10px; padding-top: 10px; border-top: 1px solid #1a1a28; border-radius: 0;
+  }
+
+  /* Comfortable touch targets */
+  .ex-input { padding: 9px 8px; font-size: 16px; }   /* 16px stops iOS zooming on focus */
+  .btn-upload-video { padding: 8px; }
+}
+
+@media (max-width: 480px) {
+  .editor-day-index { display: none; }
+  .btn-add-block { padding: 5px 9px; }
+}

@@ -14,13 +14,7 @@ export default function NewProgramPage() {
 
   const { catalogue } = useExercises()
 
-  const {
-    title, description, visibleDays, totalExercises, saving, error,
-    setTitle, setDescription, addDay, removeDay, updateDayName,
-    addBlock, removeBlock, updateBlockName,
-    addExercise, removeExercise, updateExField, resolveExerciseId,
-    save,
-  } = useEditProgram({
+  const editor = useEditProgram({
     athleteId,
     catalogue,
     onSuccess: (id) => router.push(`/admin/programs/${id}`),
@@ -34,28 +28,11 @@ export default function NewProgramPage() {
 
   return (
     <ProgramEditor
-      title={title}
-      description={description ?? ''}
-      visibleDays={visibleDays}
-      totalExercises={totalExercises}
-      saving={saving}
-      error={error}
+      {...editor}
       catalogue={catalogue}
       saveLabel="Create Program"
       breadcrumb="New Program"
-      setTitle={setTitle}
-      setDescription={setDescription}
-      addDay={addDay}
-      removeDay={removeDay}
-      updateDayName={updateDayName}
-      addBlock={addBlock}
-      removeBlock={removeBlock}
-      updateBlockName={updateBlockName}
-      addExercise={addExercise}
-      removeExercise={removeExercise}
-      updateExField={updateExField}
-      resolveExerciseId={resolveExerciseId}
-      onSave={save}
+      onSave={editor.save}
       onBack={() => router.back()}
     />
   )

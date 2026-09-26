@@ -1,10 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { getAllAthletes, createAthlete } from '@/lib/services/athleteService'
 import { AthleteListItemViewModel } from '@/lib/viewModels/AthleteViewModel'
+import Modal from '@/components/modal'
+import { ChevronRight, LogOut, Plus, TriangleAlert, Users } from 'lucide-react'
 import './athletes.css'
 
 export default function AthletesPage() {
@@ -21,6 +23,7 @@ export default function AthletesPage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [saving,        setSaving]        = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
 
   const loadAthletes = async () => {
     const data = await getAllAthletes()
@@ -71,12 +74,14 @@ export default function AthletesPage() {
         <header className="header">
           <div className="logo">Coach Panel</div>
           <div className="header-right">
-            <button className="btn btn-primary" onClick={openModal}>+ New Athlete</button>
+            <button className="btn btn-primary" onClick={openModal}>
+              <Plus size={16} aria-hidden /> New Athlete
+            </button>
             <button
               className="btn btn-logout"
               onClick={async () => { await supabase.auth.signOut(); router.replace('/login') }}
             >
-              Sign out
+              <LogOut size={14} aria-hidden /> <span className="btn-logout-label">Sign out</span>
             </button>
           </div>
         </header>
@@ -91,13 +96,15 @@ export default function AthletesPage() {
               : athletes.length === 0
                 ? (
                   <div className="empty-state">
+                    <div className="empty-state-icon"><Users size={36} aria-hidden /></div>
                     <div className="empty-state-title">No athletes yet</div>
-                    <div className="empty-state-sub">Click "+ New Athlete" to add your first one</div>
+                    <div className="empty-state-sub">Click &ldquo;New Athlete&rdquo; to add your first one</div>
                   </div>
                 )
                 : athletes.map((a, i) => (
-                  <div
+                  <button
                     key={a.id}
+                    type="button"
                     className="athlete-card"
                     style={{ animationDelay: `${i * 0.05}s` }}
                     onClick={() => router.push(`/admin/programs/${a.id}`)}
@@ -111,8 +118,8 @@ export default function AthletesPage() {
                     <div className="athlete-info">
                       <div className="athlete-name">{a.fullName}</div>
                     </div>
-                    <div className="athlete-arrow">→</div>
-                  </div>
+                    <ChevronRight className="athlete-arrow" size={20} aria-hidden />
+                  </button>
                 ))
             }
           </div>
@@ -121,25 +128,25 @@ export default function AthletesPage() {
 
       {/* New Athlete Modal */}
       {modalOpen && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
+        <Modal onClose={closeModal} title="New Athlete">
             <div className="modal-title">New Athlete</div>
 
             {/* Avatar upload */}
             <div className="avatar-upload">
-              <label className="avatar avatar-upload-preview" htmlFor="avatar-input">
+              <label className="avatar avatar-upload-preview" htmlFor="avatar-input" aria-hidden>
                 {avatarPreview
                   ? <img src={avatarPreview} alt="preview" />
                   : (name && surname ? `${name[0]}${surname[0]}` : '?')
                 }
               </label>
               <div className="avatar-upload-info">
-                <label className="avatar-upload-label" htmlFor="avatar-input">
+                <button type="button" className="avatar-upload-label" onClick={() => avatarInputRef.current?.click()}>
                   {avatarFile ? 'Change photo' : 'Upload photo'}
-                </label>
+                </button>
                 <div className="avatar-upload-sub">JPG, PNG or WEBP</div>
               </div>
               <input
+                ref={avatarInputRef}
                 id="avatar-input"
                 type="file"
                 accept="image/*"
@@ -155,18 +162,20 @@ export default function AthletesPage() {
             </div>
 
             <div className="field">
-              <label className="field-label">First Name</label>
+              <label className="field-label" htmlFor="athlete-name">First Name</label>
               <input
+                id="athlete-name"
                 className="field-input"
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder="e.g. Nikos"
-                autoFocus
+                data-autofocus
               />
             </div>
             <div className="field">
-              <label className="field-label">Last Name</label>
+              <label className="field-label" htmlFor="athlete-surname">Last Name</label>
               <input
+                id="athlete-surname"
                 className="field-input"
                 value={surname}
                 onChange={e => setSurname(e.target.value)}
@@ -175,8 +184,9 @@ export default function AthletesPage() {
               />
             </div>
             <div className="field">
-              <label className="field-label">Notes <span className="field-hint">(optional)</span></label>
+              <label className="field-label" htmlFor="athlete-notes">Notes <span className="field-hint">(optional)</span></label>
               <textarea
+                id="athlete-notes"
                 className="field-input"
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
@@ -184,7 +194,7 @@ export default function AthletesPage() {
               />
             </div>
 
-            {formError && <div className="alert-error">⚠ {formError}</div>}
+            {formError && <div className="alert-error" role="alert"><TriangleAlert size={14} aria-hidden /> {formError}</div>}
 
             <div className="modal-actions">
               <button className="btn" onClick={closeModal} disabled={saving}>Cancel</button>
@@ -192,8 +202,7 @@ export default function AthletesPage() {
                 {saving ? 'Creating…' : 'Create Athlete'}
               </button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </>
   )

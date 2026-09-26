@@ -16,13 +16,7 @@ export default function EditProgramPage() {
 
   const { catalogue } = useExercises()
 
-  const {
-    title, description, visibleDays, totalExercises, saving, loading, error,
-    setTitle, setDescription, addDay, removeDay, updateDayName,
-    addBlock, removeBlock, updateBlockName,
-    addExercise, removeExercise, updateExField, resolveExerciseId,
-    save,
-  } = useEditProgram({
+  const editor = useEditProgram({
     athleteId,
     programId,
     catalogue,
@@ -35,32 +29,15 @@ export default function EditProgramPage() {
     })
   }, [])
 
-  if (loading) return <Loader />
+  if (editor.loading) return <Loader />
 
   return (
     <ProgramEditor
-      title={title}
-      description={description ?? ''}
-      visibleDays={visibleDays}
-      totalExercises={totalExercises}
-      saving={saving}
-      error={error}
+      {...editor}
       catalogue={catalogue}
       saveLabel="Save Changes"
       breadcrumb="Edit Program"
-      setTitle={setTitle}
-      setDescription={setDescription}
-      addDay={addDay}
-      removeDay={removeDay}
-      updateDayName={updateDayName}
-      addBlock={addBlock}
-      removeBlock={removeBlock}
-      updateBlockName={updateBlockName}
-      addExercise={addExercise}
-      removeExercise={removeExercise}
-      updateExField={updateExField}
-      resolveExerciseId={resolveExerciseId}
-      onSave={save}
+      onSave={editor.save}
       onBack={() => router.back()}
     />
   )
