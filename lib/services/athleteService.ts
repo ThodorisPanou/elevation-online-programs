@@ -145,18 +145,18 @@ export async function countAthletePrograms(id: string): Promise<number> {
   return count ?? 0
 }
 
-// Permanently deletes the athlete, all their programs (days/blocks/exercises cascade
-// with each program, as in deleteProgram) and their photo file
+// Permanently deletes the athlete and all their programs in one transaction via the
+// delete_athlete Postgres function (defined in Supabase, security invoker) — if the athlete
+// can't be deleted, nothing is. Then removes their photo file.
 export async function deleteAthlete(id: string): Promise<void> {
-  const { data: athlete } = await supabase.from('athletes').select('avatar_url').eq('id', id).single()
+  const { data: avatarUrl, error } = await supabase.rpc('delete_athlete', { p_athlete_id: id })
 
-  const { error: programsError } = await supabase.from('programs').delete().eq('athlete_id', id)
-  if (programsError) { console.error('deleteAthlete programs:', programsError); throw programsError }
+  if (error) {
+    console.error('deleteAthlete:', error)
+    // PGRST202: the delete_athlete function doesn't exist on this Supabase project
+    if (error.code === 'PGRST202') throw new Error('Deleting athletes is not set up yet — the delete_athlete function is missing in Supabase')
+    throw error
+  }
 
-  // select() so a delete silently blocked by RLS (0 rows) is reported instead of looking successful
-  const { data, error } = await supabase.from('athletes').delete().eq('id', id).select('id')
-  if (error) { console.error('deleteAthlete:', error); throw error }
-  if (!data?.length) throw new Error('Athlete could not be deleted')
-
-  await deleteAvatarFile(athlete?.avatar_url)
+  await deleteAvatarFile(avatarUrl as string | null)
 }

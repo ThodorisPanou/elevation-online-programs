@@ -7,6 +7,7 @@
 import { UIDay, UIBlockExercise } from '@/lib/viewModels/EditProgramViewModel'
 import { uploadExerciseVideo, removeExerciseVideo, UploadPhase } from '@/lib/services/exerciseService'
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { ExerciseCatalogueItem } from '@/lib/viewModels/ExerciseViewModel'
 import Modal from '@/components/modal'
 import { SortableItem, SortableList } from '@/components/sortable'
@@ -326,6 +327,7 @@ function ExerciseRow({
   const [progress,   setProgress]   = useState(0)
   const [phase,      setPhase]      = useState<UploadPhase>('upload')
   const [removing,   setRemoving]   = useState(false)
+  const [confirmRemove, setConfirmRemove] = useState(false)
   const [uploadErr,  setUploadErr]  = useState<string | null>(null)
   const [showNotes,  setShowNotes]  = useState(!!be.notes)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -344,6 +346,7 @@ function ExerciseRow({
       setUploadErr(err.message ?? 'Remove failed')
     } finally {
       setRemoving(false)
+      setConfirmRemove(false)
     }
   }
 
@@ -417,7 +420,7 @@ function ExerciseRow({
                 <button
                   type="button"
                   className="btn-remove-video"
-                  onClick={handleVideoRemove}
+                  onClick={() => setConfirmRemove(true)}
                   disabled={removing}
                   aria-label={`Remove video for ${label}`}
                 >
@@ -482,6 +485,26 @@ function ExerciseRow({
                 <X size={12} aria-hidden />
               </button>
             </div>
+          )}
+
+          {/* Portal: dnd-kit transforms on the row would otherwise break the fixed overlay */}
+          {confirmRemove && createPortal(
+            <Modal onClose={() => { if (!removing) setConfirmRemove(false) }} title="Remove Video" className="modal modal-danger">
+              <div className="modal-icon"><Trash2 size={20} aria-hidden /></div>
+              <div className="modal-title">Remove Video</div>
+              <div className="modal-text">You are about to permanently delete the video for:</div>
+              <div className="modal-program-name">{label}</div>
+              <div className="modal-warning">
+                The video belongs to the exercise, so it disappears from every program that uses it. This cannot be undone.
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn" onClick={() => setConfirmRemove(false)} disabled={removing}>Cancel</button>
+                <button type="button" className="btn btn-danger" onClick={handleVideoRemove} disabled={removing}>
+                  {removing ? 'Removing…' : 'Yes, Remove'}
+                </button>
+              </div>
+            </Modal>,
+            document.body,
           )}
         </>
       )}
