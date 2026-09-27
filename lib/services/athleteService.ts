@@ -32,18 +32,37 @@ export async function getAllAthletes(): Promise<AthleteListItemViewModel[]> {
   return (data ?? []).map(mapToAthleteListItemViewModel)
 }
 
+// ─── Avatars (Supabase Storage) ───────────────────────────────────────────
+
+const AVATAR_BUCKET = 'AtheletesImages'
+
+// Storage path from a public URL: …/object/public/AtheletesImages/<path>
+function avatarPath(url: string): string | null {
+  const marker = `/object/public/${AVATAR_BUCKET}/`
+  const i = url.indexOf(marker)
+  return i === -1 ? null : decodeURIComponent(url.slice(i + marker.length).split('?')[0])
+}
+
+async function deleteAvatarFile(url?: string | null) {
+  const path = url ? avatarPath(url) : null
+  if (!path) return
+  const { error } = await supabase.storage.from(AVATAR_BUCKET).remove([path])
+  if (error) console.warn('Avatar file delete failed:', error)
+}
+
 export async function uploadAthleteAvatar(athleteId: string, file: File): Promise<string> {
   const ext  = file.name.split('.').pop()
-  const path = `${athleteId}.${ext}`
+  // New name per upload — reusing one path lets browsers keep showing the cached old photo
+  const path = `${athleteId}-${Date.now()}.${ext}`
 
   const { error: uploadError } = await supabase.storage
-    .from('AtheletesImages')
-    .upload(path, file, { upsert: true })
+    .from(AVATAR_BUCKET)
+    .upload(path, file)
 
   if (uploadError) throw uploadError
 
   const { data } = supabase.storage
-    .from('AtheletesImages')
+    .from(AVATAR_BUCKET)
     .getPublicUrl(path)
 
   return data.publicUrl
@@ -78,4 +97,66 @@ export async function createAthlete(
   }
 
   return data.id
+}
+
+// ─── Edit / delete ────────────────────────────────────────────────────────
+
+export async function updateAthlete(
+  id:     string,
+  fields: { name: string; surname: string; notes?: string },
+): Promise<void> {
+  const { error } = await supabase
+    .from('athletes')
+    .update({ name: fields.name.trim(), surname: fields.surname.trim(), notes: fields.notes?.trim() || null })
+    .eq('id', id)
+
+  if (error) { console.error('updateAthlete:', error); throw error }
+}
+
+// Uploads the new photo, points the athlete at it, then removes the old file
+export async function replaceAthleteAvatar(id: string, file: File, oldUrl?: string): Promise<string> {
+  const url = await uploadAthleteAvatar(id, file)
+
+  const { error } = await supabase.from('athletes').update({ avatar_url: url }).eq('id', id)
+  if (error) {
+    await deleteAvatarFile(url)
+    console.error('replaceAthleteAvatar:', error)
+    throw error
+  }
+
+  await deleteAvatarFile(oldUrl)
+  return url
+}
+
+export async function removeAthleteAvatar(id: string, url: string): Promise<void> {
+  const { error } = await supabase.from('athletes').update({ avatar_url: null }).eq('id', id)
+  if (error) { console.error('removeAthleteAvatar:', error); throw error }
+
+  await deleteAvatarFile(url)
+}
+
+export async function countAthletePrograms(id: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('programs')
+    .select('id', { count: 'exact', head: true })
+    .eq('athlete_id', id)
+
+  if (error) { console.error('countAthletePrograms:', error); throw error }
+  return count ?? 0
+}
+
+// Permanently deletes the athlete, all their programs (days/blocks/exercises cascade
+// with each program, as in deleteProgram) and their photo file
+export async function deleteAthlete(id: string): Promise<void> {
+  const { data: athlete } = await supabase.from('athletes').select('avatar_url').eq('id', id).single()
+
+  const { error: programsError } = await supabase.from('programs').delete().eq('athlete_id', id)
+  if (programsError) { console.error('deleteAthlete programs:', programsError); throw programsError }
+
+  // select() so a delete silently blocked by RLS (0 rows) is reported instead of looking successful
+  const { data, error } = await supabase.from('athletes').delete().eq('id', id).select('id')
+  if (error) { console.error('deleteAthlete:', error); throw error }
+  if (!data?.length) throw new Error('Athlete could not be deleted')
+
+  await deleteAvatarFile(athlete?.avatar_url)
 }

@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { getAllAthletes, createAthlete } from '@/lib/services/athleteService'
 import { AthleteListItemViewModel } from '@/lib/viewModels/AthleteViewModel'
 import Modal from '@/components/modal'
+import AvatarPicker from '@/components/avatarPicker'
 import { ChartColumn, ChevronRight, LogOut, Plus, TriangleAlert, Users, Video } from 'lucide-react'
 import './athletes.css'
 
@@ -23,7 +24,6 @@ export default function AthletesPage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [saving,        setSaving]        = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
-  const avatarInputRef = useRef<HTMLInputElement>(null)
 
   const loadAthletes = async () => {
     const data = await getAllAthletes()
@@ -137,35 +137,12 @@ export default function AthletesPage() {
         <Modal onClose={closeModal} title="New Athlete">
             <div className="modal-title">New Athlete</div>
 
-            {/* Avatar upload */}
-            <div className="avatar-upload">
-              <label className="avatar avatar-upload-preview" htmlFor="avatar-input" aria-hidden>
-                {avatarPreview
-                  ? <img src={avatarPreview} alt="preview" />
-                  : (name && surname ? `${name[0]}${surname[0]}` : '?')
-                }
-              </label>
-              <div className="avatar-upload-info">
-                <button type="button" className="avatar-upload-label" onClick={() => avatarInputRef.current?.click()}>
-                  {avatarFile ? 'Change photo' : 'Upload photo'}
-                </button>
-                <div className="avatar-upload-sub">JPG, PNG or WEBP</div>
-              </div>
-              <input
-                ref={avatarInputRef}
-                id="avatar-input"
-                type="file"
-                accept="image/*"
-                hidden
-                onChange={e => {
-                  const file = e.target.files?.[0]
-                  if (!file) return
-                  setAvatarFile(file)
-                  setAvatarPreview(URL.createObjectURL(file))
-                  e.target.value = ''
-                }}
-              />
-            </div>
+            <AvatarPicker
+              inputId="avatar-input"
+              previewUrl={avatarPreview}
+              initials={name && surname ? `${name[0]}${surname[0]}` : '?'}
+              onPick={file => { setAvatarFile(file); setAvatarPreview(URL.createObjectURL(file)) }}
+            />
 
             <div className="field">
               <label className="field-label" htmlFor="athlete-name">First Name</label>

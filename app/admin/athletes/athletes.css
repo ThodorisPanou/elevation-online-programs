@@ -35,23 +35,3 @@
 }
 .athlete-arrow { flex-shrink: 0; color: var(--fg-ghost); transition: color 0.15s; }
 .athlete-card:hover .athlete-arrow { color: var(--accent); }
-
-/* ── New-athlete modal: avatar upload ── */
-
-.avatar-upload {
-  display: flex; align-items: center; gap: 16px;
-  margin: 16px 0 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border);
-}
-.avatar.avatar-upload-preview {
-  width: 64px; height: 64px; font-size: 20px; color: var(--fg-faint);
-  cursor: pointer; transition: border-color 0.2s;
-}
-.avatar.avatar-upload-preview:hover { border-color: #e8ff4a55; }
-.avatar-upload-info { flex: 1; }
-.avatar-upload-label {
-  font-family: var(--font-display);
-  font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-  color: #9a9ad8; background: none; border: none; padding: 0; cursor: pointer; transition: color 0.15s;
-}
-.avatar-upload-label:hover { color: #aaaae8; }
-.avatar-upload-sub { font-size: 12px; color: var(--fg-ghost); margin-top: 4px; }

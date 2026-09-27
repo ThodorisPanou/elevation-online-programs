@@ -1,0 +1,39 @@
+/* Styles for app/admin/athletes/[id]/edit/page.tsx */
+
+.edit-athlete { max-width: 640px; }
+
+.edit-card {
+  padding: 24px; margin-bottom: 24px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+}
+.edit-card .avatar-upload { margin-top: 0; }
+
+.edit-name-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.edit-actions { display: flex; align-items: center; gap: 10px; margin-top: 20px; }
+.edit-saved {
+  flex: 1; display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; color: #70c870;
+}
+
+/* ── Danger zone ── */
+
+.danger-zone {
+  display: flex; align-items: center; gap: 16px;
+  padding: 20px 24px; border: 1px solid #2a1a1a; border-radius: 12px; background: #120c0c;
+}
+.danger-zone-info { flex: 1; }
+.danger-zone-title {
+  font-family: var(--font-display); margin: 0 0 4px;
+  font-size: 16px; font-weight: 700; color: var(--danger);
+}
+.danger-zone-text { margin: 0; font-size: 13px; color: #a07a7a; line-height: 1.5; }
+
+@media (max-width: 640px) {
+  .edit-card { padding: 18px; }
+  .edit-name-row { grid-template-columns: 1fr; gap: 0; }
+  .danger-zone { flex-direction: column; align-items: stretch; padding: 18px; }
+  .edit-actions .btn { flex: 1; }
+  .edit-saved { flex-basis: 100%; }
+  .edit-actions { flex-wrap: wrap; }
+}

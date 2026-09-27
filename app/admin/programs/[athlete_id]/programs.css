@@ -59,24 +59,11 @@
   .athlete-hero-name { font-size: 26px; }
 }
 
-/* ── Modals (delete / copy) ── */
+/* ── Copy modal (shared modal styles live in styles/ui.css) ── */
 
-.modal-icon {
-  width: 44px; height: 44px; border-radius: 12px; margin-bottom: 16px;
-  display: flex; align-items: center; justify-content: center; font-size: 20px;
-}
-.modal-danger { border-color: #2a1a1a; }
-.modal-danger .modal-icon { background: #2a1010; border: 1px solid #4a2020; color: var(--danger); }
 .modal-teal { border-color: #1a3030; }
 .modal-teal .modal-icon { background: #0e2020; border: 1px solid #1a4040; color: #60c0c0; }
 .modal-teal .field-input:focus { border-color: #40a0a055; }
 
-.modal-program-name {
-  font-family: var(--font-display);
-  font-size: 16px; font-weight: 700; color: var(--danger);
-  background: #1e1010; border: 1px solid #2a1818;
-  padding: 8px 12px; border-radius: 8px; margin-bottom: 12px;
-}
-.modal-warning { font-size: 12px; color: #a07a7a; line-height: 1.5; }
 .modal-note { font-size: 12px; color: var(--fg-muted); margin-top: 6px; }
 .modal-teal .field-label { margin-top: 16px; }

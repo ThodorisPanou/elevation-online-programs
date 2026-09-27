@@ -133,6 +133,13 @@ export default function AthleteProgramsPage() {
               <div className="athlete-hero-sub">Training Programs</div>
             </div>
             <div className="pill">Programs<span>{programs.length}</span></div>
+            <button
+              className="btn btn-edit"
+              onClick={() => router.push(`/admin/athletes/${athleteId}/edit`)}
+              aria-label={`Edit athlete ${athlete?.fullName ?? ''}`}
+            >
+              <Pencil size={14} aria-hidden /> Edit
+            </button>
           </div>
 
           {error && <div className="alert-error" role="alert"><TriangleAlert size={14} aria-hidden /> {error}</div>}
