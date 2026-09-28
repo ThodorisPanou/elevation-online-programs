@@ -4,30 +4,50 @@
 -- Plan: TODO.md → "Coaches (multi-coach)".
 
 -- ─── 1. Merge duplicate exercise names ──────────────────────────────────────
--- Needed for the per-coach unique name index below. Per case-insensitive name, keep the row with a video
--- (else the oldest), copy over a missing description/video, point block_exercises at it, delete the rest.
+-- Needed for the per-coach unique name index below. Per case-insensitive name, keep ONE row:
+--   1. the one with a working video (R2) — else a legacy Supabase-storage link (those 404) — else no video
+--   2. among equals, the oldest
+-- Copy over a missing description, point block_exercises at the kept row, delete the rest.
+-- If more than one copy had a working video, the dropped URLs are printed (NOTICE) for cleanup in R2.
 
 create temp table exercise_merge on commit drop as
 with ranked as (
-  select id, name, video_url, description,
+  select id, video_url,
          lower(trim(name)) as key,
          row_number() over (
            partition by lower(trim(name))
-           order by (video_url is null), created_at nulls last, id
+           order by case
+                      when nullif(trim(video_url), '') is null       then 2   -- no video
+                      when video_url like '%.supabase.co/storage/%'  then 1   -- legacy link, dead
+                      else 0                                                  -- working video
+                    end,
+                    created_at nulls last, id
          ) as rn
   from public.exercises
 )
-select d.id as dup_id, k.id as keep_id
+select d.id as dup_id, k.id as keep_id, d.video_url as dup_video_url
 from ranked d
 join ranked k on k.key = d.key and k.rn = 1
 where d.rn > 1;
 
+do $$
+declare r record;
+begin
+  for r in select dup_video_url from exercise_merge
+           where nullif(trim(dup_video_url), '') is not null and dup_video_url not like '%.supabase.co/storage/%'
+  loop
+    raise notice 'merge dropped a second working video (delete it from R2 if unused): %', r.dup_video_url;
+  end loop;
+end $$;
+
+-- A kept row never has a worse video than its duplicates (ranking above), so only the description is copied
 update public.exercises k
-set description = coalesce(k.description, d.description),
-    video_url   = coalesce(k.video_url,   d.video_url)
+set description = d.description
 from exercise_merge m
 join public.exercises d on d.id = m.dup_id
-where k.id = m.keep_id;
+where k.id = m.keep_id
+  and nullif(trim(k.description), '') is null
+  and nullif(trim(d.description), '') is not null;
 
 update public.block_exercises be
 set exercise_id = m.keep_id
