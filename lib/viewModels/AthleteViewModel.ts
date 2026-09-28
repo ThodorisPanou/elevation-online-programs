@@ -4,6 +4,7 @@
 
 export interface AthleteViewModel {
   id:          string
+  coachId:     string | null   // null only before migration A2 (all rows get a coach)
   name:        string
   surname:     string
   fullName:    string   // convenience: `${name} ${surname}`
@@ -14,6 +15,7 @@ export interface AthleteViewModel {
 
 export interface AthleteListItemViewModel {
   id:          string
+  coachId:     string | null
   name:        string
   surname:     string
   fullName:    string
@@ -25,6 +27,7 @@ export interface AthleteListItemViewModel {
 export function mapToAthleteViewModel(raw: any): AthleteViewModel {
   return {
     id:         raw.id,
+    coachId:    raw.coach_id ?? null,
     name:       raw.name,
     surname:    raw.surname,
     fullName:   `${raw.name} ${raw.surname}`,
@@ -37,6 +40,7 @@ export function mapToAthleteViewModel(raw: any): AthleteViewModel {
 export function mapToAthleteListItemViewModel(raw: any): AthleteListItemViewModel {
   return {
     id:         raw.id,
+    coachId:    raw.coach_id ?? null,
     name:       raw.name,
     surname:    raw.surname,
     fullName:   `${raw.name} ${raw.surname}`,

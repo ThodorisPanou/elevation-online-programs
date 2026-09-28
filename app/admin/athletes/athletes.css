@@ -42,3 +42,5 @@
 }
 .athlete-arrow { flex-shrink: 0; color: var(--fg-ghost); transition: color 0.15s; }
 .athlete-card:hover .athlete-arrow { color: var(--accent); }
+
+.coach-field-hint { display: block; font-size: 12px; margin-top: 6px; }

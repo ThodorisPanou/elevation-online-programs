@@ -82,8 +82,9 @@ export default function AthleteProgramsPage() {
 
   const openCopy = async (id: string, title: string) => {
     setCopyId(id); setCopyTitle(title); setCopyError(null); setCopyTarget('')
+    // Only the same coach's athletes: the program's exercises belong to that coach
     const athletes = await getAllAthletes()
-    setAllAthletes(athletes)
+    setAllAthletes(athletes.filter(a => a.coachId === (athlete?.coachId ?? null)))
   }
 
   const closeCopy = () => { if (copying) return; setCopyId(null) }
@@ -200,7 +201,7 @@ export default function AthleteProgramsPage() {
         <Modal onClose={closeCopy} title="Copy Program" className="modal modal-teal">
             <div className="modal-icon"><Copy size={20} aria-hidden /></div>
             <div className="modal-title">Copy Program</div>
-            <div className="modal-text">Copying <strong>{copyTitle}</strong> to another athlete.</div>
+            <div className="modal-text">Copying <strong>{copyTitle}</strong> to another athlete of the same coach.</div>
             <label className="field-label" htmlFor="copy-target">Select Athlete</label>
             <select
               id="copy-target"

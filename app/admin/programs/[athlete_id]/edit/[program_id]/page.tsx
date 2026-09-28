@@ -12,7 +12,7 @@ export default function EditProgramPage() {
   const athleteId  = params?.athlete_id  as string
   const programId  = params?.program_id  as string
 
-  const { catalogue } = useExercises()
+  const { catalogue } = useExercises(athleteId)
 
   const editor = useEditProgram({
     athleteId,

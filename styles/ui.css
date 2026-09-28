@@ -271,3 +271,17 @@ select.field-input option { background: #141418; }
 .menu-item:hover, .menu-item:focus-visible { background: #20202c; color: var(--fg); }
 .menu-item.danger { color: #ff8080; }
 .menu-item.danger:hover, .menu-item.danger:focus-visible { background: #2a1212; }
+
+/* ── Coach filter (admin): components/coachFilter.tsx ─────────────────── */
+
+.coach-filter {
+  display: inline-flex; align-items: center; gap: 10px; margin: -12px 0 24px;
+}
+.coach-filter-label {
+  font-family: var(--font-display);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg-muted);
+}
+.coach-filter .field-input { width: auto; min-width: 180px; padding-top: 7px; padding-bottom: 7px; }
+
+/* Coach name under an athlete / exercise, shown to the admin */
+.coach-tag { font-size: 12px; color: var(--fg-muted); margin-top: 2px; }

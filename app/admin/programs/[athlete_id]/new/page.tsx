@@ -10,7 +10,7 @@ export default function NewProgramPage() {
   const params    = useParams()
   const athleteId = params?.athlete_id as string
 
-  const { catalogue } = useExercises()
+  const { catalogue } = useExercises(athleteId)
 
   const editor = useEditProgram({
     athleteId,

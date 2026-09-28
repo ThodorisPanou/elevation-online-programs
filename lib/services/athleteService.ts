@@ -11,7 +11,7 @@ import {
 export async function getAthleteById(id: string): Promise<AthleteViewModel | null> {
   const { data, error } = await supabase
     .from('athletes')
-    .select('id, name, surname, notes, avatar_url, created_at')
+    .select('id, coach_id, name, surname, notes, avatar_url, created_at')
     .eq('id', id)
     .single()
 
@@ -24,7 +24,7 @@ export async function getAthleteById(id: string): Promise<AthleteViewModel | nul
 export async function getAllAthletes(): Promise<AthleteListItemViewModel[]> {
   const { data, error } = await supabase
     .from('athletes')
-    .select('id, name, surname, avatar_url')
+    .select('id, coach_id, name, surname, avatar_url')
     .order('surname')
 
   if (error) { console.error('getAllAthletes:', error); return [] }
@@ -51,9 +51,15 @@ async function deleteAvatarFile(url?: string | null) {
 }
 
 export async function uploadAthleteAvatar(athleteId: string, file: File): Promise<string> {
-  const ext  = file.name.split('.').pop()
+  // Photos live in the coach's folder — storage policies only let a coach write inside their own
+  const { data: athlete, error: athleteError } = await supabase
+    .from('athletes').select('coach_id').eq('id', athleteId).single()
+  if (athleteError) throw athleteError
+
+  const ext    = file.name.split('.').pop()
+  const folder = athlete.coach_id ? `${athlete.coach_id}/` : ''
   // New name per upload — reusing one path lets browsers keep showing the cached old photo
-  const path = `${athleteId}-${Date.now()}.${ext}`
+  const path   = `${folder}${athleteId}-${Date.now()}.${ext}`
 
   const { error: uploadError } = await supabase.storage
     .from(AVATAR_BUCKET)
@@ -68,16 +74,21 @@ export async function uploadAthleteAvatar(athleteId: string, file: File): Promis
   return data.publicUrl
 }
 
+// coachId: required when the admin creates an athlete; a coach leaves it out (the DB fills in their own id)
 export async function createAthlete(
   name:      string,
   surname:   string,
   notes?:    string,
   avatarFile?: File,
+  coachId?:  string,
 ): Promise<string> {
   // Insert athlete first to get the id
   const { data, error } = await supabase
     .from('athletes')
-    .insert([{ name: name.trim(), surname: surname.trim(), notes: notes?.trim() || null }])
+    .insert([{
+      name: name.trim(), surname: surname.trim(), notes: notes?.trim() || null,
+      ...(coachId ? { coach_id: coachId } : {}),
+    }])
     .select()
     .single()
 

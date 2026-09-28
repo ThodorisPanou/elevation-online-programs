@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useMe } from '@/lib/hooks/useMe'
+import { useCoaches } from '@/lib/hooks/useCoaches'
+import CoachFilter from '@/components/coachFilter'
 import { getAllAthletes, createAthlete } from '@/lib/services/athleteService'
 import { AthleteListItemViewModel } from '@/lib/viewModels/AthleteViewModel'
 import Modal from '@/components/modal'
@@ -13,6 +15,8 @@ import './athletes.css'
 export default function AthletesPage() {
   const router = useRouter()
   const { me, signOut } = useMe()
+  const { coaches, coachName, isAdmin } = useCoaches()
+  const [coachFilter, setCoachFilter] = useState('')   // admin only; '' = all coaches
   const [athletes, setAthletes] = useState<AthleteListItemViewModel[]>([])
   const [loading,  setLoading]  = useState(true)
 
@@ -23,6 +27,7 @@ export default function AthletesPage() {
   const [notes,     setNotes]     = useState('')
   const [avatarFile,    setAvatarFile]    = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [newCoachId,    setNewCoachId]    = useState('')   // admin picks the coach of a new athlete
   const [saving,        setSaving]        = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
 
@@ -40,9 +45,13 @@ export default function AthletesPage() {
     init()
   }, [])
 
+  const visible = coachFilter ? athletes.filter(a => a.coachId === coachFilter) : athletes
+
   const openModal = () => {
     setName(''); setSurname(''); setNotes(''); setFormError(null)
     setAvatarFile(null); setAvatarPreview(null)
+    // Preselect the filtered coach, or the only one
+    setNewCoachId(coachFilter || (coaches.length === 1 ? coaches[0].id : ''))
     setModalOpen(true)
   }
 
@@ -54,10 +63,11 @@ export default function AthletesPage() {
   const handleCreate = async () => {
     if (!name.trim())    { setFormError('First name is required'); return }
     if (!surname.trim()) { setFormError('Last name is required');  return }
+    if (isAdmin && !newCoachId) { setFormError('Choose the athlete’s coach'); return }
     setSaving(true)
     setFormError(null)
     try {
-      const id = await createAthlete(name, surname, notes, avatarFile ?? undefined)
+      const id = await createAthlete(name, surname, notes, avatarFile ?? undefined, isAdmin ? newCoachId : undefined)
       setModalOpen(false)
       await loadAthletes()
       router.push(`/admin/programs/${id}`)
@@ -104,18 +114,20 @@ export default function AthletesPage() {
           <div className="eyebrow">Admin</div>
           <h1 className="page-heading">Athletes</h1>
 
+          {isAdmin && <CoachFilter coaches={coaches} value={coachFilter} onChange={setCoachFilter} />}
+
           <div className="athlete-grid">
             {loading
               ? [1,2,3,4].map(i => <div key={i} className="skeleton" style={{ animationDelay: `${i*0.08}s` }} />)
-              : athletes.length === 0
+              : visible.length === 0
                 ? (
                   <div className="empty-state">
                     <div className="empty-state-icon"><Users size={36} aria-hidden /></div>
-                    <div className="empty-state-title">No athletes yet</div>
-                    <div className="empty-state-sub">Click &ldquo;New Athlete&rdquo; to add your first one</div>
+                    <div className="empty-state-title">{coachFilter ? 'No athletes for this coach' : 'No athletes yet'}</div>
+                    <div className="empty-state-sub">Click &ldquo;New Athlete&rdquo; to add {coachFilter ? 'one' : 'your first one'}</div>
                   </div>
                 )
-                : athletes.map((a, i) => (
+                : visible.map((a, i) => (
                   <button
                     key={a.id}
                     type="button"
@@ -131,6 +143,7 @@ export default function AthletesPage() {
                     </div>
                     <div className="athlete-info">
                       <div className="athlete-name">{a.fullName}</div>
+                      {isAdmin && coaches.length > 0 && <div className="coach-tag">{coachName(a.coachId)}</div>}
                     </div>
                     <ChevronRight className="athlete-arrow" size={20} aria-hidden />
                   </button>
@@ -174,6 +187,16 @@ export default function AthletesPage() {
                 onKeyDown={e => e.key === 'Enter' && handleCreate()}
               />
             </div>
+            {isAdmin && (
+              <div className="field">
+                <label className="field-label" htmlFor="athlete-coach">Coach</label>
+                <select id="athlete-coach" className="field-input" value={newCoachId} onChange={e => setNewCoachId(e.target.value)}>
+                  <option value="">— Pick a coach —</option>
+                  {coaches.filter(c => c.active).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+                {coaches.length === 0 && <div className="field-hint coach-field-hint">Add a coach first on the Coaches page.</div>}
+              </div>
+            )}
             <div className="field">
               <label className="field-label" htmlFor="athlete-notes">Notes <span className="field-hint">(optional)</span></label>
               <textarea

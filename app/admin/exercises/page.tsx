@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { getExerciseLibrary } from '@/lib/services/exerciseService'
 import { ExerciseLibraryItem } from '@/lib/viewModels/ExerciseViewModel'
 import { Video, VideoModal } from '@/components/programView'
+import { useCoaches } from '@/lib/hooks/useCoaches'
+import CoachFilter from '@/components/coachFilter'
 import { ArrowLeft, Play, Search, TriangleAlert, Video as VideoIcon, X } from 'lucide-react'
 import './exercises.css'
 
@@ -24,6 +26,14 @@ export default function ExerciseLibraryPage() {
   const [query,     setQuery]     = useState('')
   const [filter,    setFilter]    = useState<Filter>('all')
   const [video,     setVideo]     = useState<Video | null>(null)
+  const { coaches, coachName, isAdmin } = useCoaches()
+  const [coachFilter, setCoachFilter] = useState('')   // admin only; '' = all coaches
+
+  // The admin sees every coach's library; narrow it to one coach first
+  const scoped = useMemo(
+    () => coachFilter ? exercises.filter(e => e.coachId === coachFilter) : exercises,
+    [exercises, coachFilter],
+  )
 
   useEffect(() => {
     const init = async () => {
@@ -39,22 +49,22 @@ export default function ExerciseLibraryPage() {
   }, [])
 
   const counts = useMemo(() => ({
-    all:    exercises.length,
-    used:   exercises.filter(e => e.programs.length > 0).length,
-    unused: exercises.filter(e => e.programs.length === 0).length,
-  }), [exercises])
+    all:    scoped.length,
+    used:   scoped.filter(e => e.programs.length > 0).length,
+    unused: scoped.filter(e => e.programs.length === 0).length,
+  }), [scoped])
 
   // Search matches the exercise name, a program title, or an athlete name
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return exercises.filter(e => {
+    return scoped.filter(e => {
       if (filter === 'used'   && e.programs.length === 0) return false
       if (filter === 'unused' && e.programs.length > 0)   return false
       if (!q) return true
       return e.name.toLowerCase().includes(q)
         || e.programs.some(p => p.title.toLowerCase().includes(q) || p.athleteName.toLowerCase().includes(q))
     })
-  }, [exercises, query, filter])
+  }, [scoped, query, filter])
 
   return (
     <div className="page">
@@ -68,6 +78,8 @@ export default function ExerciseLibraryPage() {
       <main className="page-body">
         <div className="eyebrow">Admin</div>
         <h1 className="page-heading">Exercise Library</h1>
+
+        {isAdmin && <CoachFilter coaches={coaches} value={coachFilter} onChange={setCoachFilter} />}
 
         {error && <div className="alert-error" role="alert"><TriangleAlert size={14} aria-hidden /> {error}</div>}
 
@@ -127,6 +139,7 @@ export default function ExerciseLibraryPage() {
                     </button>
                     <div className="lib-info">
                       <div className="lib-name">{ex.name}</div>
+                      {isAdmin && coaches.length > 0 && !coachFilter && <div className="coach-tag">{coachName(ex.coachId)}</div>}
                       {ex.programs.length === 0
                         ? <div className="lib-unused">Not used in any program yet</div>
                         : (

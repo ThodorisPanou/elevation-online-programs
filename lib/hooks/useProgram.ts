@@ -12,8 +12,8 @@ interface UseProgramResult {
   setActiveDay: (index: number) => void
 }
 
-// Accepts either a public_token or a program id —
-// tries token first, falls back to id (same logic as the page had inline)
+// Accepts either a public_token or a program id — tries the token first, falls back to the id.
+// The id fallback only works when signed in (RLS: your own programs, or any for the admin).
 export function useProgram(guid: string): UseProgramResult {
   const [program,   setProgram]   = useState<ProgramViewModel | null>(null)
   const [loading,   setLoading]   = useState(true)

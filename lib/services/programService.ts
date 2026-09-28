@@ -23,12 +23,10 @@ const PROGRAM_QUERY = `
 
 // ─── Read ─────────────────────────────────────────────────────────────────
 
+// Share links: athletes open these without logging in. Anonymous users can't read the tables, so this goes
+// through get_shared_program (returns the same shape as PROGRAM_QUERY, only for public programs).
 export async function getProgramByToken(token: string): Promise<ProgramViewModel | null> {
-  const { data, error } = await supabase
-    .from('programs')
-    .select(PROGRAM_QUERY)
-    .eq('public_token', token)
-    .maybeSingle()
+  const { data, error } = await supabase.rpc('get_shared_program', { p_token: token })
 
   if (error) { console.error('getProgramByToken:', error); return null }
   if (!data)  return null
@@ -96,21 +94,24 @@ export async function createProgram(athleteId: string, vm: EditProgramViewModel)
 
   if (error) { console.error('createProgram:', error); throw error }
 
-  await saveDays(data.id, vm.days)
+  // coach_id was filled in by the DB from the athlete (trigger)
+  await saveDays(data.id, vm.days, data.coach_id ?? null)
   return data.id
 }
 
 export async function updateProgram(vm: EditProgramViewModel): Promise<void> {
   if (!vm.programId) throw new Error('programId is required for updateProgram')
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('programs')
     .update({ title: vm.title, description: vm.description || null })
     .eq('id', vm.programId)
+    .select('coach_id')
+    .single()
 
   if (error) { console.error('updateProgram:', error); throw error }
 
-  await saveDays(vm.programId, vm.days)
+  await saveDays(vm.programId, vm.days, data.coach_id ?? null)
 }
 
 export async function deleteProgram(programId: string): Promise<void> {
@@ -119,8 +120,10 @@ export async function deleteProgram(programId: string): Promise<void> {
 }
 
 // ─── Private save helpers ─────────────────────────────────────────────────
+// coachId = the program's coach: exercises created while saving belong to them.
+// (null only for rows without a coach, before migration A2.)
 
-async function saveDays(programId: string, days: UIDay[]): Promise<void> {
+async function saveDays(programId: string, days: UIDay[], coachId: string | null): Promise<void> {
   for (let di = 0; di < days.length; di++) {
     const day = days[di]
     let dayId = day.id
@@ -147,11 +150,11 @@ async function saveDays(programId: string, days: UIDay[]): Promise<void> {
       if (error) throw error
     }
 
-    await saveBlocks(dayId as string, day.blocks)
+    await saveBlocks(dayId as string, day.blocks, coachId)
   }
 }
 
-async function saveBlocks(dayId: string, blocks: UIBlock[]): Promise<void> {
+async function saveBlocks(dayId: string, blocks: UIBlock[], coachId: string | null): Promise<void> {
   for (let bi = 0; bi < blocks.length; bi++) {
     const block = blocks[bi]
     let blockId = block.id
@@ -178,7 +181,7 @@ async function saveBlocks(dayId: string, blocks: UIBlock[]): Promise<void> {
       if (error) throw error
     }
 
-    await saveBlockExercises(blockId as string, block.exercises)
+    await saveBlockExercises(blockId as string, block.exercises, coachId)
   }
 }
 
@@ -186,8 +189,8 @@ async function saveBlocks(dayId: string, blocks: UIBlock[]): Promise<void> {
 // 1. Name matches catalogue → use existing exercise id as-is
 // 2. Has an existing block_exercise id (editing saved row) + no catalogue match
 //    → update the exercise name in place, reuse the same exercise_id
-// 3. No existing id at all → create a new exercise row
-async function resolveExerciseId(ex: UIBlockExercise): Promise<string | null> {
+// 3. No existing id at all → reuse the coach's exercise with that name (any case), else create it
+async function resolveExerciseId(ex: UIBlockExercise, coachId: string | null): Promise<string | null> {
   if (!ex.exerciseName?.trim()) return null
 
   // Matched to a catalogue exercise — use it directly
@@ -214,17 +217,32 @@ async function resolveExerciseId(ex: UIBlockExercise): Promise<string | null> {
     }
   }
 
-  // Brand new exercise — create it
+  // Typed a name without picking it from the list — reuse the coach's existing exercise
+  // (names are unique per coach, case-insensitively, so inserting it again would fail)
+  const name = ex.exerciseName.trim()
+  const existing = await findCoachExercise(name, coachId)
+  if (existing) return existing
+
+  // Brand new exercise — create it for the program's coach
   const { data, error } = await supabase
     .from('exercises')
-    .insert([{ name: ex.exerciseName.trim() }])
+    .insert([{ name, ...(coachId ? { coach_id: coachId } : {}) }])
     .select()
     .single()
   if (error) throw error
   return data.id
 }
 
-async function saveBlockExercises(blockId: string, exercises: UIBlockExercise[]): Promise<void> {
+async function findCoachExercise(name: string, coachId: string | null): Promise<string | null> {
+  // ilike without wildcards = case-insensitive equality; escape the pattern characters
+  const pattern = name.replace(/[\\%_]/g, c => `\\${c}`)
+  const base    = supabase.from('exercises').select('id, name').ilike('name', pattern)
+  const { data, error } = await (coachId ? base.eq('coach_id', coachId) : base.is('coach_id', null))
+  if (error) throw error
+  return (data ?? []).find(e => e.name.trim().toLowerCase() === name.toLowerCase())?.id ?? null
+}
+
+async function saveBlockExercises(blockId: string, exercises: UIBlockExercise[], coachId: string | null): Promise<void> {
   for (let ei = 0; ei < exercises.length; ei++) {
     const ex = exercises[ei]
 
@@ -239,7 +257,7 @@ async function saveBlockExercises(blockId: string, exercises: UIBlockExercise[])
     if (!ex.exerciseName?.trim()) continue
 
     // Resolve or create the exercise, getting back a guaranteed id
-    const exerciseId = await resolveExerciseId(ex)
+    const exerciseId = await resolveExerciseId(ex, coachId)
     if (!exerciseId) continue
 
     const fields = {

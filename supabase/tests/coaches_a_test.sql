@@ -1,5 +1,6 @@
 -- Behaviour tests for migration A. DEV only; everything is rolled back.
--- psql "$DEV_DB_URL" -X -q -f supabase/tests/coaches_a_test.sql
+-- Written for the state right after migration A (coach_id still nullable, before A2/B) — kept for history.
+-- For the current state use scripts/test-rls.mjs.
 -- Each check prints "PASS …" or "FAIL …".
 
 begin;

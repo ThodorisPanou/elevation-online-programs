@@ -20,10 +20,11 @@ export async function getAllExercises(): Promise<ExerciseViewModel[]> {
   return (data ?? []).map(mapToExerciseViewModel)
 }
 
-export async function getExerciseCatalogue(): Promise<ExerciseCatalogueItem[]> {
-  const { data, error } = await supabase
-    .from('exercises')
-    .select('id, name, video_url')
+// Exercises one coach can use in a program. RLS already limits a coach to their own; the admin can read every
+// coach's, so the program editor always passes the program's coach (null = rows without a coach, before A2).
+export async function getExerciseCatalogue(coachId: string | null): Promise<ExerciseCatalogueItem[]> {
+  const base = supabase.from('exercises').select('id, name, video_url')
+  const { data, error } = await (coachId ? base.eq('coach_id', coachId) : base.is('coach_id', null))
     .order('name')
 
   if (error) { console.error('getExerciseCatalogue:', error); return [] }
@@ -35,7 +36,7 @@ export async function getExerciseLibrary(): Promise<ExerciseLibraryItem[]> {
   const { data, error } = await supabase
     .from('exercises')
     .select(`
-      id, name, video_url,
+      id, coach_id, name, video_url,
       block_exercises (
         blocks (
           program_days (

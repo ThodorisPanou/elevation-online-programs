@@ -49,6 +49,7 @@ export interface ExerciseProgramRef {
 
 export interface ExerciseLibraryItem {
   id:        string
+  coachId:   string | null
   name:      string
   video_url: string
   programs:  ExerciseProgramRef[]   // sorted by title, one entry per program
@@ -76,6 +77,7 @@ export function mapToExerciseLibraryItem(raw: any): ExerciseLibraryItem {
 
   return {
     id:        raw.id,
+    coachId:   raw.coach_id ?? null,
     name:      raw.name,
     video_url: raw.video_url,
     programs:  [...byId.values()].sort((a, b) => a.title.localeCompare(b.title)),
