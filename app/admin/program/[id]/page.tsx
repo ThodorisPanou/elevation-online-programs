@@ -1,8 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
 import { useProgram } from '@/lib/hooks/useProgram'
 import { Loader, NotFound } from '@/components/pageStatus'
 import { ProgramHero, ProgramDays } from '@/components/programView'
@@ -15,11 +13,6 @@ export default function AdminProgramPage() {
 
   const { program, loading, notFound, activeDay, setActiveDay } = useProgram(id)
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) router.replace('/login')
-    })
-  }, [])
 
   if (loading) return <Loader />
   if (notFound || !program) return <NotFound message="Program not found" />

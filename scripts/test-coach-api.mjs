@@ -49,6 +49,10 @@ try {
 
   // ─── Auth checks ─────────────────────────────────────────────────────────
   check((await api('GET', '/api/coaches')).status === 401, 'GET /api/coaches without token → 401')
+  check((await api('GET', '/api/me')).status === 401, 'GET /api/me without token → 401')
+
+  let me = await api('GET', '/api/me', adminToken)
+  check(me.status === 200 && me.json.isAdmin === true && me.json.coach === null, '/api/me: admin, no coach profile')
 
   // ─── Create ──────────────────────────────────────────────────────────────
   let r = await api('POST', '/api/coaches', adminToken, { username: 'Bad Name!', name: 'X' })
@@ -69,6 +73,10 @@ try {
   let coach = await signIn(`${username}@login.invalid`, tempPassword)
   check(!coach.error && coach.token, 'coach signs in with username + temp password', coach.error?.message ?? '')
 
+  me = await api('GET', '/api/me', coach.token)
+  check(me.status === 200 && !me.json.isAdmin && me.json.coach?.username === username && me.json.coach?.must_change_password === true,
+    '/api/me: coach with must_change_password')
+
   r = await api('GET', '/api/coaches', coach.token)
   check(r.status === 403, 'coach cannot list coaches → 403')
   r = await api('POST', '/api/upload-video', coach.token, { contentType: 'video/mp4', size: 10 })
@@ -88,6 +96,8 @@ try {
   check((await signIn(`${username}@login.invalid`, tempPassword)).error, 'old temp password no longer works')
   coach = await signIn(`${username}@login.invalid`, newPassword)
   check(!coach.error, 'new password works')
+  me = await api('GET', '/api/me', coach.token)
+  check(me.json.coach?.must_change_password === false, '/api/me: must_change_password false after change')
 
   r = await api('POST', '/api/upload-video', coach.token, { contentType: 'video/mp4', size: 10 })
   check(r.status !== 401 && r.status !== 403, 'coach passes the video route guard after changing password', `status ${r.status}: ${r.json.error ?? ''}`)
@@ -118,6 +128,8 @@ try {
   r = await api('PATCH', `/api/coaches/${coachId}`, adminToken, { action: 'deactivate' })
   check(r.status === 200 && r.json.coach?.active === false, 'deactivate')
   check((await signIn(`${renamed}@login.invalid`, tempPassword)).error, 'deactivated coach cannot sign in')
+  r = await api('GET', '/api/me', coach.token)
+  check(r.status === 401, 'deactivated coach: existing session rejected by /api/me', `status ${r.status}`)
 
   r = await api('PATCH', `/api/coaches/${coachId}`, adminToken, { action: 'activate' })
   check(r.status === 200 && r.json.coach?.active === true, 'activate')

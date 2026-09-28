@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
 import { getExerciseLibrary } from '@/lib/services/exerciseService'
 import { ExerciseLibraryItem } from '@/lib/viewModels/ExerciseViewModel'
 import { Video, VideoModal } from '@/components/programView'
@@ -28,8 +27,6 @@ export default function ExerciseLibraryPage() {
 
   useEffect(() => {
     const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return router.replace('/login')
       try {
         setExercises(await getExerciseLibrary())
       } catch (e: any) {

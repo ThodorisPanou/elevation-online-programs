@@ -129,6 +129,11 @@
 }
 .alert-error svg { flex-shrink: 0; }
 
+.alert-success {
+  background: #0e1a0e; border: 1px solid #205020; border-radius: 8px;
+  padding: 10px 14px; margin-bottom: 20px; font-size: 13px; color: #60c060;
+}
+
 .skeleton {
   height: 72px; border-radius: 12px;
   background: linear-gradient(90deg, #16161e 25%, #1e1e28 50%, #16161e 75%);

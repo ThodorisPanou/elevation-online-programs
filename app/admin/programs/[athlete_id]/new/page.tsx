@@ -1,8 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
 import { useEditProgram } from '@/lib/hooks/useEditProgram'
 import { useExercises } from '@/lib/hooks/useExercises'
 import ProgramEditor from '@/components/programEditor'
@@ -20,11 +18,6 @@ export default function NewProgramPage() {
     onSuccess: (id) => router.push(`/admin/programs/${id}`),
   })
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) router.replace('/login')
-    })
-  }, [])
 
   return (
     <ProgramEditor

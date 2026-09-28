@@ -2,16 +2,17 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
+import { useMe } from '@/lib/hooks/useMe'
 import { getAllAthletes, createAthlete } from '@/lib/services/athleteService'
 import { AthleteListItemViewModel } from '@/lib/viewModels/AthleteViewModel'
 import Modal from '@/components/modal'
 import AvatarPicker from '@/components/avatarPicker'
-import { ChartColumn, ChevronRight, LogOut, Plus, TriangleAlert, Users, Video } from 'lucide-react'
+import { ChartColumn, ChevronRight, KeyRound, LogOut, Plus, TriangleAlert, UserCog, Users, Video } from 'lucide-react'
 import './athletes.css'
 
 export default function AthletesPage() {
   const router = useRouter()
+  const { me, signOut } = useMe()
   const [athletes, setAthletes] = useState<AthleteListItemViewModel[]>([])
   const [loading,  setLoading]  = useState(true)
 
@@ -32,8 +33,7 @@ export default function AthletesPage() {
 
   useEffect(() => {
     const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return router.replace('/login')
+
       await loadAthletes()
       setLoading(false)
     }
@@ -72,8 +72,16 @@ export default function AthletesPage() {
     <>
       <div className="page">
         <header className="header">
-          <div className="logo">Coach Panel</div>
+          <div className="header-left">
+            <div className="logo">Coach Panel</div>
+            <div className="header-user" title={me.email}>{me.coach?.name ?? (me.isAdmin ? 'Admin' : '')}</div>
+          </div>
           <div className="header-right">
+            {me.isAdmin && (
+              <button className="btn" onClick={() => router.push('/admin/coaches')}>
+                <UserCog size={15} aria-hidden /> <span className="btn-exercises-label">Coaches</span>
+              </button>
+            )}
             <button className="btn" onClick={() => router.push('/admin/exercises')}>
               <Video size={15} aria-hidden /> <span className="btn-exercises-label">Exercises</span>
             </button>
@@ -83,10 +91,10 @@ export default function AthletesPage() {
             <button className="btn btn-primary" onClick={openModal}>
               <Plus size={16} aria-hidden /> New Athlete
             </button>
-            <button
-              className="btn btn-logout"
-              onClick={async () => { await supabase.auth.signOut(); router.replace('/login') }}
-            >
+            <button className="btn-icon" onClick={() => router.push('/admin/password')} aria-label="Change password" title="Change password">
+              <KeyRound size={16} aria-hidden />
+            </button>
+            <button className="btn btn-logout" onClick={signOut}>
               <LogOut size={14} aria-hidden /> <span className="btn-logout-label">Sign out</span>
             </button>
           </div>

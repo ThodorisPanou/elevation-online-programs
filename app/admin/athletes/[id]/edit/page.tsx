@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
 import {
   getAthleteById, updateAthlete, replaceAthleteAvatar, removeAthleteAvatar,
   countAthletePrograms, deleteAthlete,
@@ -48,8 +47,6 @@ export default function EditAthletePage() {
 
   useEffect(() => {
     const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return router.replace('/login')
       const a = await getAthleteById(athleteId)
       if (a) fillForm(a)
       setLoading(false)

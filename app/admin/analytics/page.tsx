@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
 import { getAnalytics } from '@/lib/services/analyticsService'
 import {
   AnalyticsViewModel,
@@ -27,8 +26,6 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return router.replace('/login')
       try {
         setVm(await getAnalytics())
       } catch (e: any) {

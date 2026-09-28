@@ -1,8 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
 import { useAthletePrograms } from '@/lib/hooks/useAthleteProgram'
 import { deleteProgram, copyProgram } from '@/lib/services/programService'
 import { getAllAthletes } from '@/lib/services/athleteService'
@@ -40,11 +39,6 @@ export default function AthleteProgramsPage() {
   const [copiedId,     setCopiedId]     = useState<string | null>(null)
   const [copyError,    setCopyError]    = useState<string | null>(null)
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) router.replace('/login')
-    })
-  }, [])
 
   const fmt = (iso?: string) => {
     if (!iso) return ''
