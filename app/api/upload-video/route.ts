@@ -1,9 +1,9 @@
 // app/api/upload-video/route.ts
 // Generates a presigned PUT URL for direct browser → R2 upload.
-// No file passes through this server. Admin-only; type and size are enforced by the signature.
+// No file passes through this server. Coaches + admins only; type and size are enforced by the signature.
 
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/server/requireAdmin'
+import { requireCoach } from '@/lib/server/auth'
 import { presignPut, CF_R2_PUBLIC_URL } from '@/lib/server/r2'
 
 const MAX_BYTES = 300 * 1024 * 1024 // 300 MB — uploads are normally compressed in the browser first
@@ -17,8 +17,8 @@ const EXTENSIONS: Record<string, string> = {
 }
 
 export async function POST(req: NextRequest) {
-  const denied = await requireAdmin(req)
-  if (denied) return denied
+  const caller = await requireCoach(req)
+  if (caller instanceof NextResponse) return caller
 
   try {
     const { contentType, size } = await req.json()

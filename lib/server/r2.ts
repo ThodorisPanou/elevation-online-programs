@@ -11,6 +11,13 @@ const REGION  = 'auto'
 const SERVICE = 's3'
 const HOST    = `${CF_ACCOUNT_ID}.r2.cloudflarestorage.com`
 
+// Dev runs without R2 credentials until it has its own bucket — fail clearly instead of with a bad signature
+function assertConfigured() {
+  if (!CF_ACCOUNT_ID || !CF_R2_ACCESS_KEY || !CF_R2_SECRET_KEY || !CF_R2_BUCKET || !CF_R2_PUBLIC_URL) {
+    throw new Error('Video storage (R2) is not configured on this server')
+  }
+}
+
 // Keys we generate on upload: <uuid>.<ext>
 const KEY_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(mp4|mov|webm|m4v)$/i
 
@@ -58,6 +65,7 @@ export function keyFromPublicUrl(url: string): string | null {
  * must upload exactly this type and size — R2 rejects anything else.
  */
 export async function presignPut(key: string, contentType: string, contentLength: number, expiresIn = 3600) {
+  assertConfigured()
   const { dateStamp, amzDate } = timestamps()
   const credentialScope = `${dateStamp}/${REGION}/${SERVICE}/aws4_request`
 
@@ -87,6 +95,7 @@ export async function presignPut(key: string, contentType: string, contentLength
 }
 
 export async function deleteObject(key: string) {
+  assertConfigured()
   const { dateStamp, amzDate } = timestamps()
   const credentialScope = `${dateStamp}/${REGION}/${SERVICE}/aws4_request`
   const bodyHash = await sha256('')

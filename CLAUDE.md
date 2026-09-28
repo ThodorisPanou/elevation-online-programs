@@ -15,9 +15,15 @@ exercise videos) for athletes; athletes open a public link to view their program
 - `app/program/[token]` — public athlete view (by `public_token`, falls back to program id)
 - `app/admin/*` — athletes, programs (new/edit), exercise library, analytics. Pages guard with
   `supabase.auth.getSession()` client-side; `app/login` signs in
-- `app/api/upload-video`, `app/api/delete-video` — admin-only R2 routes (see Videos)
+- `app/api/upload-video`, `app/api/delete-video` — R2 routes for coaches + admins (see Videos)
+- `app/api/coaches`, `app/api/coaches/[id]` — admin-only coach accounts (create, rename, reset password,
+  deactivate); `app/api/me/password` — change own password. Logic in `lib/server/coaches.ts`
 - `lib/services/*` — all Supabase queries; `lib/viewModels/*` — map DB rows to UI shapes; `lib/hooks/*` — page state
-- `lib/server/*` — server-only code (R2 SigV4 signing, admin check). Never import from client components
+- `lib/server/*` — server-only code (R2 SigV4 signing, `auth.ts` role guards, `supabaseAdmin.ts` service-role
+  client). Never import from client components
+- `lib/logins.ts` — username logins: a username is the auth email `<username>@login.invalid`; admins use real emails
+- `supabase/migrations` — SQL applied with psql (no Docker); `supabase/seed.sql` fake dev data;
+  `supabase/tests` SQL tests; `scripts/test-coach-api.mjs` API tests against `npm run dev` + dev project
 - `components/*` — shared UI (`modal.tsx` accessible dialog, `programView.tsx`, `programEditor.tsx`, `exercisePicker.tsx`)
 - `model/*` — DB row types. `styles/ui.css` — shared styles; components have sibling `.css` files
 - Style: 2-space, no semicolons, aligned assignments, `// ─── Section ───` dividers, short "why" comments
@@ -32,7 +38,9 @@ exercise videos) for athletes; athletes open a public link to view their program
 
 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`,
 `CLOUDFLARE_R2_ACCESS_KEY`, `CLOUDFLARE_R2_SECRET_KEY`, `CLOUDFLARE_R2_BUCKET`, `CLOUDFLARE_R2_PUBLIC_URL`,
-`ADMIN_EMAILS` (comma-separated; the video API routes refuse all requests while it's empty).
+`SUPABASE_SERVICE_ROLE_KEY` (server only).
+`.env.local` points at the DEV Supabase project (`glabro-dev`); production values live in `.env.prod`, DB URLs
+for psql in `.env.db` (`PROD_DB_URL`, `DEV_DB_URL`). R2 vars are commented out in dev (they're the prod bucket).
 
 ## Videos
 
@@ -43,8 +51,8 @@ exercise videos) for athletes; athletes open a public link to view their program
      Content-Length are signed, so the browser must PUT exactly that type/size (video types only, max 300 MB)
   3. browser PUTs directly to R2, then saves the public URL to `exercises.video_url`
   4. old video deleted only after the new URL is saved
-- `requireAdmin` (`lib/server/requireAdmin.ts`) verifies the Bearer token with Supabase and checks `ADMIN_EMAILS`.
-  Being signed in isn't enough — Supabase public sign-up may still be enabled.
+- `requireCoach` (`lib/server/auth.ts`) verifies the Bearer token and checks roles in the DB: admin = row in
+  `admins`, coach = active row in `coaches` that has changed its temporary password.
 - Delete only accepts `<uuid>.<ext>` keys on the current R2 public host (`keyFromPublicUrl`); other URLs are a no-op.
 - Playback: `VideoModal` in `components/programView.tsx`, plain `<video controls playsInline>`.
 - Existing files are H.264 `.mov`/`.mp4` with faststart. ~54 exercises still point to deleted Supabase Storage
@@ -55,7 +63,7 @@ exercise videos) for athletes; athletes open a public link to view their program
 ## Open items
 
 Personal checklist lives in `TODO.md` (gitignored, local only). Main open items:
-- Set `ADMIN_EMAILS` locally and in Vercel
+- Multi-coach work in progress on branch `coaches` (plan in `TODO.md`)
 - Supabase: disable public sign-up; review RLS (write access for any `authenticated`/`anon` user; anon can read all programs)
 - Fix the legacy Supabase video links; move R2 to a custom domain (then update `keyFromPublicUrl` to accept the old host)
 - Video modal: show an error on load failure, `preload="metadata"`

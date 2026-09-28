@@ -1,13 +1,13 @@
 // app/api/delete-video/route.ts
-// Deletes a video from Cloudflare R2 by its public URL. Admin-only.
+// Deletes a video from Cloudflare R2 by its public URL. Coaches + admins only.
 
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/server/requireAdmin'
+import { requireCoach } from '@/lib/server/auth'
 import { deleteObject, keyFromPublicUrl } from '@/lib/server/r2'
 
 export async function DELETE(req: NextRequest) {
-  const denied = await requireAdmin(req)
-  if (denied) return denied
+  const caller = await requireCoach(req)
+  if (caller instanceof NextResponse) return caller
 
   try {
     const { videoId } = await req.json()
