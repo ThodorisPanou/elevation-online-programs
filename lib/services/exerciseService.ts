@@ -16,7 +16,7 @@ export async function getAllExercises(): Promise<ExerciseViewModel[]> {
     .select('id, name, description, video_url, created_at')
     .order('name')
 
-  if (error) { console.error('getAllExercises:', error); return [] }
+  if (error) {  console.error('getAllExercises:', error); return [] }
   return (data ?? []).map(mapToExerciseViewModel)
 }
 
