@@ -39,21 +39,27 @@ exercise videos) for athletes; athletes open a public link to view their program
 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`,
 `CLOUDFLARE_R2_ACCESS_KEY`, `CLOUDFLARE_R2_SECRET_KEY`, `CLOUDFLARE_R2_BUCKET`, `CLOUDFLARE_R2_PUBLIC_URL`,
 `SUPABASE_SERVICE_ROLE_KEY` (server only).
-`.env.local` points at the DEV Supabase project (`glabro-dev`); production values live in `.env.prod`, DB URLs
-for psql in `.env.db` (`PROD_DB_URL`, `DEV_DB_URL`). R2 vars are commented out in dev (they're the prod bucket).
+`.env.local` points at the DEV Supabase project (`glabro-dev`) and the DEV R2 bucket `online-videos-dev` (own token,
+limited to that bucket); production values live in `.env.prod` / Vercel (bucket `program-videos`), DB URLs for psql
+in `.env.db` (`PROD_DB_URL`, `DEV_DB_URL`). Never print these files' values.
 
 ## Videos
 
 - Upload flow (`lib/services/exerciseService.ts` → `uploadExerciseVideo`):
   1. compress in the browser with ffmpeg.wasm (`lib/videoCompression.ts`: 720p H.264 MP4, faststart; core loaded
      from jsDelivr on first use; falls back to the original file on failure or no size gain)
-  2. `POST /api/upload-video` with the Supabase access token → presigned R2 PUT URL. Content-Type and
+  2. `POST /api/upload-video` with the Supabase access token + `exerciseId` → presigned R2 PUT URL for
+     `<coach_id>/<uuid>.<ext>` (the exercise's coach; a coach may only upload for own exercises). Content-Type and
      Content-Length are signed, so the browser must PUT exactly that type/size (video types only, max 300 MB)
   3. browser PUTs directly to R2, then saves the public URL to `exercises.video_url`
   4. old video deleted only after the new URL is saved
 - `requireCoach` (`lib/server/auth.ts`) verifies the Bearer token and checks roles in the DB: admin = row in
   `admins`, coach = active row in `coaches` that has changed its temporary password.
-- Delete only accepts `<uuid>.<ext>` keys on the current R2 public host (`keyFromPublicUrl`); other URLs are a no-op.
+- Delete (`/api/delete-video`) only accepts `[<coach_id>/]<uuid>.<ext>` keys on the current R2 public host
+  (`keyFromPublicUrl`); other URLs are a no-op. The app unlinks `exercises.video_url` first; a file still used by any
+  exercise is never deleted. Coach folder → that coach or admin; older folder-less files (unused) → any coach.
+- Tests (dev server + dev project + `online-videos-dev` bucket): `scripts/test-videos.mjs`, `scripts/test-rls.mjs`,
+  `scripts/test-coach-api.mjs`.
 - Playback: `VideoModal` in `components/programView.tsx`, plain `<video controls playsInline>`.
 - Existing files are H.264 `.mov`/`.mp4` with faststart. ~54 exercises still point to deleted Supabase Storage
   files (pre-R2 migration) and 404.

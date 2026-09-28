@@ -113,7 +113,7 @@ export async function uploadExerciseVideo(
   const res = await fetch('/api/upload-video', {
     method:  'POST',
     headers: await authHeaders(),
-    body:    JSON.stringify({ contentType, size: file.size }),
+    body:    JSON.stringify({ contentType, size: file.size, exerciseId }),   // the exercise's coach = R2 folder
   })
 
   if (!res.ok) {
@@ -154,7 +154,8 @@ export async function uploadExerciseVideo(
 
   if (updateError) throw updateError
 
-  // 5. Only now remove the old video, so a failed upload never loses it (fire and forget)
+  // 5. Only now remove the old video, so a failed upload never loses it (fire and forget).
+  //    The server deletes it only if no exercise still uses it.
   if (existing?.video_url && existing.video_url !== publicUrl) {
     deleteVideoFile(existing.video_url).catch(e => console.warn('Old video delete failed:', e))
   }
@@ -162,6 +163,8 @@ export async function uploadExerciseVideo(
   return publicUrl
 }
 
+// Unlinks the video first, then deletes the file: the server only deletes files no exercise uses anymore,
+// and a failed file delete then just leaves an unused file instead of a broken link.
 export async function removeExerciseVideo(exerciseId: string): Promise<void> {
   const { data, error: fetchError } = await supabase
     .from('exercises')
@@ -171,14 +174,14 @@ export async function removeExerciseVideo(exerciseId: string): Promise<void> {
 
   if (fetchError) throw fetchError
 
-  if (data?.video_url) {
-    await deleteVideoFile(data.video_url)
-  }
-
   const { error } = await supabase
     .from('exercises')
     .update({ video_url: null })
     .eq('id', exerciseId)
 
   if (error) throw error
+
+  if (data?.video_url) {
+    await deleteVideoFile(data.video_url).catch(e => console.warn('Video file delete failed:', e))
+  }
 }

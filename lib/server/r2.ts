@@ -18,8 +18,9 @@ function assertConfigured() {
   }
 }
 
-// Keys we generate on upload: <uuid>.<ext>
-const KEY_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(mp4|mov|webm|m4v)$/i
+// Keys we generate on upload: <coach_id>/<uuid>.<ext>. Older uploads have no folder: <uuid>.<ext>
+const UUID        = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+const KEY_PATTERN = new RegExp(`^(?:(${UUID})/)?${UUID}\\.(mp4|mov|webm|m4v)$`, 'i')
 
 async function hmac(key: ArrayBuffer | string, msg: string): Promise<ArrayBuffer> {
   const raw = typeof key === 'string' ? new TextEncoder().encode(key) : key
@@ -46,6 +47,11 @@ function timestamps() {
 async function signature(dateStamp: string, stringToSign: string) {
   const signingKey = await hmac(await hmac(await hmac(await hmac(`AWS4${CF_R2_SECRET_KEY}`, dateStamp), REGION), SERVICE), 'aws4_request')
   return hex(await hmac(signingKey, stringToSign))
+}
+
+/** The coach folder of a key we generated, or null for an older key without a folder. */
+export function coachFolderOfKey(key: string): string | null {
+  return key.match(KEY_PATTERN)?.[1]?.toLowerCase() ?? null
 }
 
 /** The object key for one of our public video URLs, or null if the URL isn't an R2 video we own. */
