@@ -42,3 +42,6 @@ next-env.d.ts
 
 # personal notes
 TODO.md
+
+# Production database dumps (personal data — never commit)
+/backups/
