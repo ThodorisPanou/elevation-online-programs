@@ -1,7 +1,10 @@
 # CLAUDE.md
 
-Training-program app for a coach: admins build programs (days → blocks → exercises with sets/reps/kg/rest,
-exercise videos) for athletes; athletes open a public link to view their program, mostly on phones.
+Training-program app for coaches: coaches build programs (days → blocks → exercises with sets/reps/kg/rest,
+exercise videos) for their athletes; athletes open a public share link to view their program, mostly on phones.
+Roles: **admin** (row in `admins`) sees and edits everything and manages coach logins on `/admin/coaches`;
+**coach** (active row in `coaches`, username login) sees only rows with their `coach_id` — enforced by RLS
+(`can_manage()` etc., migration B). Anon has no table access; share links go through `get_shared_program()`.
 
 ## Stack
 
@@ -69,8 +72,8 @@ in `.env.db` (`PROD_DB_URL`, `DEV_DB_URL`). Never print these files' values.
 ## Open items
 
 Personal checklist lives in `TODO.md` (gitignored, local only). Main open items:
-- Multi-coach work in progress on branch `coaches` (plan in `TODO.md`)
-- Supabase: disable public sign-up; review RLS (write access for any `authenticated`/`anon` user; anon can read all programs)
+- Multi-coach is live (2026-09-30, coach `glabro`). Next big item: athlete logins + PWA (plan in `TODO.md`)
+- Supabase: disable public sign-up (if not done yet)
 - Fix the legacy Supabase video links; move R2 to a custom domain (then update `keyFromPublicUrl` to accept the old host)
 - Video modal: show an error on load failure, `preload="metadata"`
 - Optionally re-compress existing R2 videos
