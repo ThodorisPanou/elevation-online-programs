@@ -12,7 +12,7 @@ import { passwordProblem } from '@/lib/logins'
 export async function POST(req: NextRequest) {
   const caller = await requireUser(req)
   if (caller instanceof NextResponse) return caller
-  if (caller.coach && !caller.coach.active && !caller.isAdmin) {
+  if (!caller.isAdmin && ((caller.coach && !caller.coach.active) || caller.athlete?.login_disabled)) {
     return NextResponse.json({ error: 'Not allowed' }, { status: 403 })
   }
 

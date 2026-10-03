@@ -1,6 +1,7 @@
 // lib/services/athleteService.ts
 
 import { supabase } from '@/lib/supabaseClient'
+import { apiFetch } from '@/lib/services/apiClient'
 import {
   AthleteViewModel,
   AthleteListItemViewModel,
@@ -159,15 +160,7 @@ export async function countAthletePrograms(id: string): Promise<number> {
 // Permanently deletes the athlete and all their programs in one transaction via the
 // delete_athlete Postgres function (defined in Supabase, security invoker) — if the athlete
 // can't be deleted, nothing is. Then removes their photo file.
+// Server route: also removes the athlete's login (auth user), which the browser can't do
 export async function deleteAthlete(id: string): Promise<void> {
-  const { data: avatarUrl, error } = await supabase.rpc('delete_athlete', { p_athlete_id: id })
-
-  if (error) {
-    console.error('deleteAthlete:', error)
-    // PGRST202: the delete_athlete function doesn't exist on this Supabase project
-    if (error.code === 'PGRST202') throw new Error('Deleting athletes is not set up yet — the delete_athlete function is missing in Supabase')
-    throw error
-  }
-
-  await deleteAvatarFile(avatarUrl as string | null)
+  await apiFetch(`/api/athletes/${id}`, { method: 'DELETE' })
 }

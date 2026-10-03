@@ -21,6 +21,8 @@ Roles: **admin** (row in `admins`) sees and edits everything and manages coach l
 - `app/api/upload-video`, `app/api/delete-video` — R2 routes for coaches + admins (see Videos)
 - `app/api/coaches`, `app/api/coaches/[id]` — admin-only coach accounts (create, rename, reset password,
   deactivate); `app/api/me/password` — change own password. Logic in `lib/server/coaches.ts`
+- `app/api/athletes/[id]/login`, `.../login-link`, `app/api/athletes/[id]` (DELETE), `app/api/login-link/redeem` — athlete
+  logins (branch `athlete-auth`, migration C on DEV only). Logic in `lib/server/athletes.ts`; tests `scripts/test-athlete-api.mjs`
 - `lib/services/*` — all Supabase queries; `lib/viewModels/*` — map DB rows to UI shapes; `lib/hooks/*` — page state
 - `lib/server/*` — server-only code (R2 SigV4 signing, `auth.ts` role guards, `supabaseAdmin.ts` service-role
   client). Never import from client components
