@@ -10,7 +10,8 @@ Roles: **admin** (row in `admins`) sees and edits everything and manages coach l
 (`can_manage()` etc., migration B); **athlete** (`athletes.user_id`, username login) has NO direct table access —
 only the security-definer `get_my_*()`, `log_exercise()` … functions (migrations C, D), because their own
 `athletes` row holds the coach's notes. Anon has no table access; share links go through `get_shared_program()`.
-Migrations A–D are all live on production (see TODO.md → Reference).
+Migrations A–E are all live on production (see TODO.md → Reference). The app's name lives in `lib/brand.ts`
+("Elevation Performance Online Programs", short "Elevation"); a coach's name shows only as "Coached by …".
 
 ## Stack
 
@@ -102,7 +103,7 @@ its SQL test (rolled back) → apply the migration (additive, so the live app ke
 
 Personal checklist lives in `TODO.md` (gitignored, local only; finished plans in `TODO-archive.md`). Main open items:
 - Follow-ups: glabro's first login + ticking "Track"; a real-iPhone test of login link → home-screen app → Log sheet
-- To analyze: rebranding ("Glabro" is the coach's name but shows as the app's name), videos on a custom domain
+- To analyze: videos on a custom domain
   (`r2.dev` is rate-limited; then `keyFromPublicUrl` must accept the old host), GDPR basics (privacy page, retention),
   program availability (expiry date)
 - ~54 legacy Supabase video links 404; video player has no error state
