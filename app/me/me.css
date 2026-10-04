@@ -35,6 +35,32 @@
 .me-program-latest { color: var(--log-accent); font-weight: 600; margin-right: 8px; }
 .me-program-chevron { flex-shrink: 0; color: var(--log-faint); }
 
+/* ── "Add to Home Screen" guide ── */
+
+.install {
+  position: relative; margin-top: 32px; padding: 20px 20px 22px; border-radius: 18px;
+  background: var(--log-raised); border: 1px solid #8fd4b84d;
+}
+.install-close {
+  position: absolute; top: 8px; right: 8px; width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--log-faint); background: none; border: none; cursor: pointer;
+}
+@media (hover: hover) { .install-close:hover { color: var(--log-text); background: #ffffff0d; } }
+.install-title { margin: 0; padding-right: 36px; font-size: 18px; font-weight: 600; line-height: 1.3; }
+.install-text  { margin: 6px 0 0; font-size: 15px; line-height: 1.5; color: var(--log-muted); }
+.install-steps {
+  margin: 14px 0 0; padding-left: 22px; list-style: decimal;
+  display: grid; gap: 10px; font-size: 15px; line-height: 1.6; color: var(--log-muted);
+}
+.install-steps li::marker { color: var(--log-accent); font-weight: 600; }
+.install-key {
+  display: inline-flex; align-items: center; gap: 5px; padding: 0 8px; border-radius: 8px;
+  color: var(--log-text); font-weight: 500; background: #ffffff0f; white-space: nowrap;
+}
+.install-key svg { color: var(--log-accent); }
+.install .install-button { margin-top: 16px; }
+
 /* ── Buttons, forms ── */
 
 .me-button {

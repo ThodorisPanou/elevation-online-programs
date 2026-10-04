@@ -10,6 +10,7 @@ import Menu from '@/components/menu'
 import AthleteLoginPanel from '@/components/athleteLogin'
 import { ArrowLeft, Check, ClipboardList, Copy, Eye, Link, Pencil, Plus, Trash2, TriangleAlert } from 'lucide-react'
 import { ProgramViewModel } from '@/lib/viewModels/ProgramViewModel'
+import { copyText } from '@/lib/clipboard'
 import './programs.css'
 
 // "3 days · 24 exercises"
@@ -74,9 +75,9 @@ export default function AthleteProgramsPage() {
     }
   }
 
-  const handleShareCopy = (token: string, id: string) => {
+  const handleShareCopy = async (token: string, id: string) => {
     const url = `${window.location.origin}/program/${token}`
-    navigator.clipboard.writeText(url)
+    if (!(await copyText(url))) { window.prompt('Copy the share link:', url); return }
     setCopiedId(id)
     setTimeout(() => setCopiedId(null), 2000)
   }

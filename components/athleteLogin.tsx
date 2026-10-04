@@ -12,6 +12,7 @@ import {
   AthleteLogin, LoginLink, createLoginLink, getAthleteLogin, setAthleteLoginEnabled, setAthleteUsername,
 } from '@/lib/services/athleteLoginService'
 import { USERNAME_HINT, USERNAME_PATTERN, normalizeUsername } from '@/lib/logins'
+import { copyText } from '@/lib/clipboard'
 import './athleteLogin.css'
 
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
@@ -60,7 +61,13 @@ export default function AthleteLoginPanel({ athleteId, athleteName }: { athleteI
 
   const copy = async (what: 'message' | 'link') => {
     if (!link) return
-    await navigator.clipboard.writeText(what === 'message' ? linkMessage(link.url) : link.url)
+    if (!(await copyText(what === 'message' ? linkMessage(link.url) : link.url))) {
+      // Last resort: select the link so it can be copied by hand
+      setError('Couldn’t copy automatically — the link is selected, copy it by hand')
+      const input = document.getElementById('login-link-url') as HTMLInputElement | null
+      input?.focus(); input?.select()
+      return
+    }
     setCopied(what)
     setTimeout(() => setCopied(null), 2000)
   }

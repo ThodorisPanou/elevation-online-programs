@@ -10,6 +10,7 @@ import { LogShell } from '@/components/programView'
 import { useAthleteMe } from '@/lib/hooks/useAthleteMe'
 import { MyProgramSummary, getMyPrograms } from '@/lib/services/athleteAppService'
 import { MeNav } from './meNav'
+import { InstallHint } from './installHint'
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -32,6 +33,8 @@ export default function MyProgramsPage() {
         </div>
         {athlete.avatar_url && <img className="log-avatar" src={athlete.avatar_url} alt="" />}
       </header>
+
+      <InstallHint />
 
       <h2 className="me-section">Your programs</h2>
 

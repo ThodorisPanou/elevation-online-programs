@@ -17,6 +17,7 @@ import { USERNAME_HINT, USERNAME_PATTERN, normalizeUsername } from '@/lib/logins
 import Modal from '@/components/modal'
 import Menu from '@/components/menu'
 import { NotFound } from '@/components/pageStatus'
+import { copyText } from '@/lib/clipboard'
 import './coaches.css'
 
 type Dialog =
@@ -105,10 +106,10 @@ function Coaches() {
   })
 
   const copyCredentials = async (username: string, password: string) => {
-    await navigator.clipboard.writeText(
+    const copied = await copyText(
       `Login: ${window.location.origin}/login\nUsername: ${username}\nTemporary password: ${password}`,
     )
-    setCopied(true)
+    if (copied) setCopied(true)
   }
 
   // ─── Render ───────────────────────────────────────────────────────────

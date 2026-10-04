@@ -12,6 +12,7 @@ import Link from 'next/link'
 import { Check, Copy } from 'lucide-react'
 import { LogShell } from '@/components/programView'
 import { LinkInvalidError, signInWithLoginLink } from '@/lib/services/athleteAppService'
+import { copyText } from '@/lib/clipboard'
 import '@/app/me/me.css'
 
 const IN_APP_BROWSER = /Instagram|FBAN|FBAV|FB_IAB|FBIOS|Line\/|musical_ly|BytedanceWebview|Snapchat/i
@@ -49,7 +50,7 @@ export default function LoginLinkPage() {
   }, [])
 
   const copyLink = async () => {
-    await navigator.clipboard.writeText(window.location.href)
+    if (!(await copyText(window.location.href))) return
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
