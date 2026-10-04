@@ -60,10 +60,17 @@
 .log-coach-name { font-weight: 700; color: var(--log-text); }
 
 .log-avatar {
-  width: 96px; height: 96px; flex-shrink: 0; border-radius: 50%; object-fit: cover;
+  width: 96px; height: 96px; flex-shrink: 0; border-radius: 50%;
+  object-fit: cover; object-position: 50% 22%;   /* faces sit near the top of tall photos */
   background: var(--log-raised);
   /* A mint ring with a gap, like a bead on the program's thread, and a soft lift off the background */
   box-shadow: 0 0 0 3px var(--log-bg), 0 0 0 5px #8fd4b880, 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+/* No photo (or it failed): initials, quiet, in the same ringed circle */
+.log-avatar-initials {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px; font-weight: 600; letter-spacing: 0.02em; color: var(--log-muted);
+  user-select: none;
 }
 
 .log-brief {
@@ -201,6 +208,7 @@
   .log-top { margin-bottom: 32px; }
   .day-chips { margin-left: -20px; margin-right: -20px; padding-left: 20px; padding-right: 20px; }
   .log-avatar { width: 80px; height: 80px; }
+  .log-avatar-initials { font-size: 26px; }
   .step { column-gap: 12px; }
 }
 

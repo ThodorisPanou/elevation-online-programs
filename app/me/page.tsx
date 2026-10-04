@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
-import { LogFooter, LogShell } from '@/components/programView'
+import { AthleteAvatar, LogFooter, LogShell } from '@/components/programView'
 import { useAthleteMe } from '@/lib/hooks/useAthleteMe'
 import { MyProgramSummary, getMyPrograms } from '@/lib/services/athleteAppService'
 import { MeNav } from './meNav'
@@ -33,7 +33,7 @@ export default function MyProgramsPage() {
           <h1 className="log-athlete">{athlete.name} {athlete.surname}</h1>
           {athlete.coach_name && <p className="log-coach">Coached by <strong className="log-coach-name">{athlete.coach_name}</strong></p>}
         </div>
-        {athlete.avatar_url && <img className="log-avatar" src={athlete.avatar_url} alt="" />}
+        <AthleteAvatar src={athlete.avatar_url} name={athlete.name} surname={athlete.surname} />
       </header>
 
       <InstallHint />

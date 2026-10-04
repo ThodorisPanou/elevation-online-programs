@@ -5,6 +5,7 @@
 // a short path of exercises on one thread, and the numbers read as a plain sentence ("3 sets · 8–10 reps").
 
 import React, { KeyboardEvent, TouchEvent, useRef, useState } from 'react'
+import Image from 'next/image'
 import { Manrope } from 'next/font/google'
 import { ProgramViewModel, ViewBlock, ViewBlockExercise, ViewDay } from '@/lib/viewModels/ProgramViewModel'
 import Modal from '@/components/modal'
@@ -108,7 +109,7 @@ export function ProgramView({ program, activeDay, setActiveDay, nav, stepExtra, 
           <p className="log-program">{program.title}</p>
           {program.coach_name && <p className="log-coach">Coached by <strong className="log-coach-name">{program.coach_name}</strong></p>}
         </div>
-        {athlete?.avatar_url && <img className="log-avatar" src={athlete.avatar_url} alt="" />}
+        <AthleteAvatar src={athlete?.avatar_url} name={athlete?.name} surname={athlete?.surname} />
       </header>
 
       {program.description && <p className="log-brief">{program.description}</p>}
@@ -155,6 +156,30 @@ export function ProgramView({ program, activeDay, setActiveDay, nav, stepExtra, 
       {video && <VideoModal video={video} onClose={() => setVideo(null)} />}
       {children}
     </LogShell>
+  )
+}
+
+// ─── Athlete photo ────────────────────────────────────────────────────────
+// Photos come in every shape (tall phone shots to wide landscapes), so the circle's crop is anchored near the top,
+// where a face usually is. Ours go through Next's optimizer (an 80–96px circle needs ~250px, not a 1 MB original);
+// anything else is shown as is. No photo, or one that fails to load → the athlete's initials in the same circle.
+// alt="": the athlete's name is right beside it.
+
+const OPTIMIZABLE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/`
+
+export function AthleteAvatar({ src, name, surname }: { src?: string | null; name?: string; surname?: string }) {
+  const [failedSrc, setFailedSrc] = useState<string | null>(null)   // per photo: another athlete's still loads
+  const initials = [name, surname].map(s => s?.trim()[0] ?? '').join('').toUpperCase()
+
+  if (!src || failedSrc === src) {
+    if (!initials) return null
+    return <span className="log-avatar log-avatar-initials" aria-hidden>{initials}</span>
+  }
+  return (
+    <Image
+      className="log-avatar" src={src} alt="" width={96} height={96} priority
+      unoptimized={!src.startsWith(OPTIMIZABLE)} onError={() => setFailedSrc(src)}
+    />
   )
 }
 
