@@ -8,10 +8,16 @@ import { errorResponse } from '@/lib/server/coaches'
 import { redeemLoginLink } from '@/lib/server/athletes'
 
 export async function POST(req: NextRequest) {
+  // Which browser used a link (Vercel logs) — to spot link scanners or in-app browsers using links up.
+  // Never logs the token.
+  const ua = req.headers.get('user-agent') ?? 'unknown'
   try {
     const { token } = await req.json().catch(() => ({}))
-    return NextResponse.json(await redeemLoginLink(token))
+    const result = await redeemLoginLink(token)
+    console.log('login-link redeemed by:', ua)
+    return NextResponse.json(result)
   } catch (err) {
+    console.log('login-link refused for:', ua)
     return errorResponse('POST /api/login-link/redeem', err)
   }
 }

@@ -1,12 +1,12 @@
 'use client'
 
 // app/l/[token]/page.tsx
-// A coach's one-time login link. Opened in a real browser → signs the athlete in and goes to /me.
+// A coach's one-time login link. Opened in a real browser → "Sign in" button → session → /me.
 // Opened inside Instagram/Facebook/TikTok's in-app browser → don't use the link up there: that browser keeps
 // its own storage (the login wouldn't stick, and the link only works once), so explain how to open it in
 // Safari/Chrome instead.
 
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState, useSyncExternalStore } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Check, Copy } from 'lucide-react'
@@ -17,16 +17,27 @@ import '@/app/me/me.css'
 
 const IN_APP_BROWSER = /Instagram|FBAN|FBAV|FB_IAB|FBIOS|Line\/|musical_ly|BytedanceWebview|Snapchat/i
 
-type State = 'checking' | 'in-app' | 'signing-in' | 'invalid' | 'error'
+// Never sign in on page load: chat apps (Instagram, Messenger…) scan links sent in messages with a browser that
+// runs JavaScript, and an automatic sign-in would use up the one-time link before the athlete taps it.
+// A real person taps "Sign in"; scanners don't.
+type State = 'ready' | 'signing-in' | 'invalid' | 'error'
+
+// The page is server-rendered (no navigator): render nothing browser-specific until hydrated
+const noSubscribe = () => () => {}
+const userAgent   = () => navigator.userAgent
 
 export default function LoginLinkPage() {
   const router  = useRouter()
   const token   = useParams()?.token as string
-  const started = useRef(false)   // dev StrictMode runs effects twice; a link must only be redeemed once
+  const started = useRef(false)   // a double tap must not redeem twice
 
-  const [state,  setState]  = useState<State>('checking')
-  const [copied, setCopied] = useState(false)
-  const [isIOS,  setIsIOS]  = useState(true)
+  const ua     = useSyncExternalStore(noSubscribe, userAgent, () => null)
+  const inApp  = ua !== null && IN_APP_BROWSER.test(ua)
+  const isIOS  = ua === null || /iPhone|iPad|iPod/i.test(ua)
+
+  const [state,      setState]      = useState<State>('ready')
+  const [continued,  setContinued]  = useState(false)   // "Continue here anyway" inside an in-app browser
+  const [copied,     setCopied]     = useState(false)
 
   const signIn = async () => {
     if (started.current) return
@@ -41,21 +52,13 @@ export default function LoginLinkPage() {
     }
   }
 
-  useEffect(() => {
-    const ua = navigator.userAgent
-    setIsIOS(/iPhone|iPad|iPod/i.test(ua))
-    if (IN_APP_BROWSER.test(ua)) setState('in-app')
-    else signIn()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per page load
-  }, [])
-
   const copyLink = async () => {
     if (!(await copyText(window.location.href))) return
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
-  if (state === 'in-app') {
+  if (inApp && !continued && state === 'ready') {
     return (
       <LogShell>
         <h1 className="log-athlete">Open this in {isIOS ? 'Safari' : 'Chrome'}</h1>
@@ -71,7 +74,7 @@ export default function LoginLinkPage() {
         <button className="me-button" onClick={copyLink}>
           {copied ? <><Check size={16} aria-hidden /> Link copied</> : <><Copy size={16} aria-hidden /> Copy link</>}
         </button>
-        <button className="me-text-button" onClick={signIn}>Continue here anyway</button>
+        <button className="me-text-button" onClick={() => setContinued(true)}>Continue here anyway</button>
       </LogShell>
     )
   }
@@ -99,10 +102,21 @@ export default function LoginLinkPage() {
     )
   }
 
+  if (state === 'signing-in') {
+    return (
+      <LogShell busy>
+        <h1 className="log-athlete">Signing you in…</h1>
+        <p className="log-brief" role="status">Just a moment.</p>
+      </LogShell>
+    )
+  }
+
   return (
-    <LogShell busy>
-      <h1 className="log-athlete">Signing you in…</h1>
-      <p className="log-brief" role="status">Just a moment.</p>
+    <LogShell>
+      <h1 className="log-athlete">Your training programs</h1>
+      <p className="log-brief">Your coach sent you a login link. Tap below to sign in on this phone.</p>
+      {/* Disabled until hydrated (ua known): a tap on the server-rendered button would do nothing */}
+      <button className="me-button" onClick={signIn} disabled={ua === null}>Sign in</button>
     </LogShell>
   )
 }
