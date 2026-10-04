@@ -2,7 +2,7 @@
 
 // components/exerciseRecords.tsx
 // Athlete app: under each exercise the coach tracks, the athlete's best and latest set and a "Log" button. The
-// coach's program view shows the same line read-only (no button). The sheet logs a best set (reps × kg) on a date, lists that exercise's history (across programs) and edits or
+// coach's program view shows the same line read-only (no button), and its record count opens the history. The sheet logs a best set (reps × kg) on a date, lists that exercise's history (across programs) and edits or
 // deletes the athlete's own records. Uses the athlete app's dialog/form styles (app/me/me.css).
 
 import { FormEvent, useEffect, useMemo, useState } from 'react'
@@ -13,6 +13,7 @@ import {
   ExerciseLog, ExerciseLogInput, LogInputError,
   deleteMyExerciseLog, getMyExerciseLogs, logExercise, updateMyExerciseLog,
 } from '@/lib/services/athleteAppService'
+import '@/app/me/me.css'   // dialog + form styles, also needed on the coach's program view
 import './exerciseRecords.css'
 
 // ─── Formatting ───────────────────────────────────────────────────────────
@@ -39,8 +40,8 @@ function formatDay(iso: string) {
 const formatKg = (kg: number) => String(Number(kg))
 const formatSet = (l: Pick<ExerciseLog, 'reps' | 'kg'>) => `${l.reps} × ${formatKg(l.kg)} kg`
 
-// What the line needs of a record — the athlete's own (ExerciseLog) or the coach's view of them
-type RecordLike = Pick<ExerciseLog, 'id' | 'reps' | 'kg'>
+// What the line and history need of a record — the athlete's own (ExerciseLog) or the coach's view of them
+type RecordLike = Pick<ExerciseLog, 'id' | 'reps' | 'kg' | 'performed_on' | 'note'>
 
 // Heaviest weight wins; same weight → more reps
 function best<T extends RecordLike>(logs: T[]) {
@@ -88,8 +89,14 @@ export type ExerciseLogs = ReturnType<typeof useExerciseLogs>
 
 // ─── Line under a tracked exercise ────────────────────────────────────────
 
-// logs: newest first. Without onLog (the coach's view) it's read-only: no button, and a record count.
-export function RecordLine({ be, logs, onLog }: { be: ViewBlockExercise; logs: RecordLike[]; onLog?: () => void }) {
+// logs: newest first. Without onLog (the coach's view) it's read-only: no Log button, and the record count opens
+// the history (onHistory).
+export function RecordLine({ be, logs, onLog, onHistory }: {
+  be:         ViewBlockExercise
+  logs:       RecordLike[]
+  onLog?:     () => void
+  onHistory?: () => void
+}) {
   const top    = best(logs)
   const latest = logs[0]
 
@@ -101,7 +108,11 @@ export function RecordLine({ be, logs, onLog }: { be: ViewBlockExercise; logs: R
           {latest.id !== top!.id && (
             <span className="rec-fact"><span className="rec-key">Last</span> {formatSet(latest)}</span>
           )}
-          {!onLog && <span className="rec-fact rec-key">{logs.length} record{logs.length !== 1 ? 's' : ''}</span>}
+          {!onLog && (
+            <button className="rec-count" onClick={onHistory} aria-label={`${logs.length} record${logs.length !== 1 ? 's' : ''} of ${be.exercise?.name ?? 'this exercise'}: show history`}>
+              {logs.length} record{logs.length !== 1 ? 's' : ''}
+            </button>
+          )}
         </p>
       ) : (
         <p className="rec-summary rec-empty">{onLog ? 'Log your best set' : 'No records yet'}</p>
@@ -133,7 +144,6 @@ function emptyForm(be: ViewBlockExercise, logs: ExerciseLog[]) {
 export function RecordSheet({ be, records, onClose }: { be: ViewBlockExercise; records: ExerciseLogs; onClose: () => void }) {
   const name = be.exercise?.name ?? 'Exercise'
   const logs = records.of(be.exercise.id)
-  const top  = best(logs)
 
   const [editing,  setEditing]  = useState<ExerciseLog | null>(null)
   const [form,     setForm]     = useState(() => emptyForm(be, logs))
@@ -262,31 +272,71 @@ export function RecordSheet({ be, records, onClose }: { be: ViewBlockExercise; r
         </div>
       </form>
 
-      {logs.length > 0 && (
-        <section className="rec-history" aria-label="History">
-          <h3 className="rec-history-title">History</h3>
-          <ol className="rec-list">
-            {logs.map(l => (
-              <li key={l.id}>
+      {logs.length > 0 && <History logs={logs} onPick={startEdit} pickedId={editing?.id} />}
+      {records.failed && <p className="rec-sheet-sub">Your earlier records didn’t load. New ones still save.</p>}
+    </Modal>
+  )
+}
+
+// ─── History ──────────────────────────────────────────────────────────────
+// Newest first, best marked. With onPick (the athlete) each record is a button that opens it for editing.
+
+function History<T extends RecordLike>({ logs, onPick, pickedId }: { logs: T[]; onPick?: (l: T) => void; pickedId?: string }) {
+  const top = best(logs)
+  return (
+    <section className="rec-history" aria-label="History">
+      <h3 className="rec-history-title">History</h3>
+      <ol className="rec-list">
+        {logs.map(l => {
+          const content = (
+            <>
+              <span className="rec-item-day">{formatDay(l.performed_on)}</span>
+              <span className="rec-item-set">
+                {formatSet(l)}
+                {l.id === top?.id && logs.length > 1 && <span className="rec-best">Best</span>}
+              </span>
+              {l.note && <span className="rec-item-note">{l.note}</span>}
+            </>
+          )
+          return (
+            <li key={l.id}>
+              {onPick ? (
                 <button
                   type="button"
-                  className={`rec-item${editing?.id === l.id ? ' is-editing' : ''}`}
-                  onClick={() => startEdit(l)}
+                  className={`rec-item${pickedId === l.id ? ' is-editing' : ''}`}
+                  onClick={() => onPick(l)}
                   aria-label={`Edit ${formatSet(l)} on ${formatDay(l.performed_on)}`}
                 >
-                  <span className="rec-item-day">{formatDay(l.performed_on)}</span>
-                  <span className="rec-item-set">
-                    {formatSet(l)}
-                    {l.id === top?.id && logs.length > 1 && <span className="rec-best">Best</span>}
-                  </span>
-                  {l.note && <span className="rec-item-note">{l.note}</span>}
+                  {content}
                 </button>
-              </li>
-            ))}
-          </ol>
-        </section>
-      )}
-      {records.failed && <p className="rec-sheet-sub">Your earlier records didn’t load. New ones still save.</p>}
+              ) : (
+                <div className="rec-item is-static">{content}</div>
+              )}
+            </li>
+          )
+        })}
+      </ol>
+    </section>
+  )
+}
+
+// ─── Coach: read-only history ─────────────────────────────────────────────
+
+export function RecordHistorySheet({ be, logs, athleteName, onClose }: {
+  be:          ViewBlockExercise
+  logs:        RecordLike[]   // newest first
+  athleteName: string
+  onClose:     () => void
+}) {
+  const name = be.exercise?.name ?? 'Exercise'
+  return (
+    <Modal onClose={onClose} title={`${name}: records`} className="me-dialog rec-sheet" overlayClassName="me-dialog-overlay">
+      <h2 className="me-dialog-title">{name}</h2>
+      <p className="rec-sheet-sub">{athleteName}’s best sets, from every program</p>
+      <History logs={logs} />
+      <div className="me-dialog-actions">
+        <button type="button" className="me-button is-quiet" onClick={onClose} data-autofocus>Close</button>
+      </div>
     </Modal>
   )
 }
