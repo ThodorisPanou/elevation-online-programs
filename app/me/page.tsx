@@ -6,14 +6,13 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
-import { LogShell } from '@/components/programView'
+import { LogFooter, LogShell } from '@/components/programView'
 import { useAthleteMe } from '@/lib/hooks/useAthleteMe'
 import { MyProgramSummary, getMyPrograms } from '@/lib/services/athleteAppService'
 import { MeNav } from './meNav'
 import { InstallHint } from './installHint'
 import { PasswordCard } from './passwordCard'
 import { MyProgress } from '@/components/exerciseRecords'
-import { APP_NAME } from '@/lib/brand'
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -72,7 +71,7 @@ export default function MyProgramsPage() {
 
       <MyProgress />
 
-      <footer className="log-foot">{APP_NAME}</footer>
+      <LogFooter />
     </LogShell>
   )
 }

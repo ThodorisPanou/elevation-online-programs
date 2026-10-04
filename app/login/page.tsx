@@ -8,6 +8,7 @@ import { toLoginEmail } from "@/lib/logins"
 import { getMe } from "@/lib/services/coachService"
 import { LinkSignIn } from "./linkSignIn"
 import { APP_NAME } from "@/lib/brand"
+import { Credit } from "@/components/credit"
 import "./login.css"
 
 // Set by app/admin/layout.tsx when it signs someone out
@@ -99,6 +100,7 @@ function LoginForm() {
       </form>
 
       <LinkSignIn />
+      <Credit className="login-credit" />
       </div>
     </div>
   )

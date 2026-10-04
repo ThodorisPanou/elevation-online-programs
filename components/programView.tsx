@@ -10,6 +10,7 @@ import { ProgramViewModel, ViewBlock, ViewBlockExercise, ViewDay } from '@/lib/v
 import Modal from '@/components/modal'
 import { ArrowRight, Play, X } from 'lucide-react'
 import { APP_NAME, APP_SHORT_NAME } from '@/lib/brand'
+import { Credit } from '@/components/credit'
 import './programView.css'
 
 // Carries Greek, so athlete and exercise names never fall back to a different face
@@ -149,11 +150,21 @@ export function ProgramView({ program, activeDay, setActiveDay, nav, stepExtra, 
         </section>
       )}
 
-      <footer className="log-foot">{APP_NAME}</footer>
+      <LogFooter />
 
       {video && <VideoModal video={video} onClose={() => setVideo(null)} />}
       {children}
     </LogShell>
+  )
+}
+
+// App name + "Built by …" at the bottom of the athlete pages (/me and every program page)
+export function LogFooter() {
+  return (
+    <footer className="log-foot">
+      <p className="log-foot-name">{APP_NAME}</p>
+      <Credit className="log-credit" />
+    </footer>
   )
 }
 
