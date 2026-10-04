@@ -1,0 +1,53 @@
+/* Styles for components/athleteLogin.tsx — the "App login" panel on the athlete page */
+
+.login-panel {
+  margin-bottom: 32px; padding: 16px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+}
+.login-skeleton { height: 64px; }
+
+.login-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.login-icon {
+  width: 36px; height: 36px; flex-shrink: 0; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  background: #1a1e0a; border: 1px solid #2a3010; color: var(--accent);
+}
+.login-head-text { flex: 1; min-width: 160px; }
+.login-title {
+  margin: 0;
+  font-family: var(--font-display); font-size: 18px; font-weight: 800; color: var(--fg); line-height: 1.1;
+}
+.login-username { margin-top: 2px; font-size: 13px; color: var(--fg-muted); }
+.login-username strong { color: #c8c8dc; font-weight: 600; }
+
+.login-status {
+  font-family: var(--font-display);
+  font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 20px; border: 1px solid; white-space: nowrap;
+}
+.login-status.tone-off     { color: var(--fg-muted); background: #16161e; border-color: var(--border-strong); }
+.login-status.tone-pending { color: #c0c060; background: #1a1a10; border-color: #484820; }
+.login-status.tone-ok      { color: #60c060; background: #0e1a0e; border-color: #205020; }
+.login-status.tone-danger  { color: var(--danger); background: #1e1010; border-color: #4a2020; }
+
+.login-error { margin: 14px 0 0; }
+
+.login-actions { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
+
+/* The freshly created link */
+.login-link {
+  margin-top: 16px; padding: 14px;
+  background: #0d0d12; border: 1px solid var(--border-strong); border-radius: 10px;
+  animation: fadeUp 0.2s ease both;
+}
+.login-link-url { font-size: 13px; color: #c8c8dc; }
+.login-link-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.login-link-note { margin: 10px 0 0; font-size: 12px; line-height: 1.5; color: var(--fg-muted); }
+
+.login-field-hint { display: block; font-size: 12px; margin-top: 6px; }
+
+@media (max-width: 640px) {
+  .login-status { order: 3; }
+  .login-actions .btn-primary, .login-actions .btn-teal { flex: 1; padding: 10px 14px; }
+  .login-link-actions .btn { flex: 1 1 auto; padding: 9px 12px; }
+}

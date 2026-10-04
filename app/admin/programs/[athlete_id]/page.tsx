@@ -7,6 +7,7 @@ import { deleteProgram, copyProgram } from '@/lib/services/programService'
 import { getAllAthletes } from '@/lib/services/athleteService'
 import Modal from '@/components/modal'
 import Menu from '@/components/menu'
+import AthleteLoginPanel from '@/components/athleteLogin'
 import { ArrowLeft, Check, ClipboardList, Copy, Eye, Link, Pencil, Plus, Trash2, TriangleAlert } from 'lucide-react'
 import { ProgramViewModel } from '@/lib/viewModels/ProgramViewModel'
 import './programs.css'
@@ -138,6 +139,8 @@ export default function AthleteProgramsPage() {
           </div>
 
           {error && <div className="alert-error" role="alert"><TriangleAlert size={14} aria-hidden /> {error}</div>}
+
+          {athlete && <AthleteLoginPanel athleteId={athleteId} athleteName={athlete.fullName} />}
 
           <div className="eyebrow">All Programs</div>
 
