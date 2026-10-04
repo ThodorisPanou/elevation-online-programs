@@ -15,6 +15,18 @@ export interface AthleteExerciseLog {
   created_at:    string
 }
 
+/**
+ * Whether the signed-in user may see this athlete's records: their coach or the admin. RLS returns the athlete row
+ * only to them (athletes have no table access; nobody signed in → no session, not even asked).
+ */
+export async function canViewAthleteRecords(athleteId: string): Promise<boolean> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return false
+  const { data, error } = await supabase.from('athletes').select('id').eq('id', athleteId).maybeSingle()
+  if (error) { console.error('canViewAthleteRecords:', error); return false }
+  return !!data
+}
+
 /** Newest first. */
 export async function getAthleteExerciseLogs(athleteId: string): Promise<AthleteExerciseLog[]> {
   const { data, error } = await supabase

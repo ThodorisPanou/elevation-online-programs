@@ -14,7 +14,7 @@ const PROGRAM_QUERY = `
     blocks (
       id, name, order_index,
       block_exercises (
-        id, sets, reps, kg, rest_seconds, notes, order_index,
+        id, sets, reps, kg, rest_seconds, notes, order_index, track,
         exercises ( id, name, video_url )
       )
     )

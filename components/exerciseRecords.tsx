@@ -2,7 +2,7 @@
 
 // components/exerciseRecords.tsx
 // Athlete app: under each exercise the coach tracks, the athlete's best and latest set and a "Log" button. The
-// sheet logs a best set (reps × kg) on a date, lists that exercise's history (across programs) and edits or
+// coach's program view shows the same line read-only (no button). The sheet logs a best set (reps × kg) on a date, lists that exercise's history (across programs) and edits or
 // deletes the athlete's own records. Uses the athlete app's dialog/form styles (app/me/me.css).
 
 import { FormEvent, useEffect, useMemo, useState } from 'react'
@@ -39,9 +39,12 @@ function formatDay(iso: string) {
 const formatKg = (kg: number) => String(Number(kg))
 const formatSet = (l: Pick<ExerciseLog, 'reps' | 'kg'>) => `${l.reps} × ${formatKg(l.kg)} kg`
 
+// What the line needs of a record — the athlete's own (ExerciseLog) or the coach's view of them
+type RecordLike = Pick<ExerciseLog, 'id' | 'reps' | 'kg'>
+
 // Heaviest weight wins; same weight → more reps
-function best(logs: ExerciseLog[]) {
-  return logs.reduce<ExerciseLog | null>(
+function best<T extends RecordLike>(logs: T[]) {
+  return logs.reduce<T | null>(
     (top, l) => !top || l.kg > top.kg || (l.kg === top.kg && l.reps > top.reps) ? l : top, null)
 }
 
@@ -85,7 +88,8 @@ export type ExerciseLogs = ReturnType<typeof useExerciseLogs>
 
 // ─── Line under a tracked exercise ────────────────────────────────────────
 
-export function RecordLine({ be, logs, onLog }: { be: ViewBlockExercise; logs: ExerciseLog[]; onLog: () => void }) {
+// logs: newest first. Without onLog (the coach's view) it's read-only: no button, and a record count.
+export function RecordLine({ be, logs, onLog }: { be: ViewBlockExercise; logs: RecordLike[]; onLog?: () => void }) {
   const top    = best(logs)
   const latest = logs[0]
 
@@ -97,13 +101,16 @@ export function RecordLine({ be, logs, onLog }: { be: ViewBlockExercise; logs: E
           {latest.id !== top!.id && (
             <span className="rec-fact"><span className="rec-key">Last</span> {formatSet(latest)}</span>
           )}
+          {!onLog && <span className="rec-fact rec-key">{logs.length} record{logs.length !== 1 ? 's' : ''}</span>}
         </p>
       ) : (
-        <p className="rec-summary rec-empty">Log your best set</p>
+        <p className="rec-summary rec-empty">{onLog ? 'Log your best set' : 'No records yet'}</p>
       )}
-      <button className="rec-log" onClick={onLog} aria-label={`Log ${be.exercise?.name ?? 'exercise'}`}>
-        <Plus size={16} aria-hidden /> Log
-      </button>
+      {onLog && (
+        <button className="rec-log" onClick={onLog} aria-label={`Log ${be.exercise?.name ?? 'exercise'}`}>
+          <Plus size={16} aria-hidden /> Log
+        </button>
+      )}
     </div>
   )
 }
