@@ -122,7 +122,6 @@
 .me-form .me-button { align-self: flex-start; }
 
 .me-error   { margin: 16px 0 0; font-size: 14px; color: #ff8f8f; }
-.me-success { margin: 16px 0 0; font-size: 14px; color: var(--log-accent); }
 
 @media (max-width: 640px) {
   .me-nav-label { display: none; }
