@@ -9,7 +9,8 @@ const nextConfig: NextConfig = {
     root: __dirname,
   },
   images: {
-    remotePatterns: [{ protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/object/public/**" }],
+    // Public and signed (`/object/sign/…?token=…`) storage links — production's photos are signed
+    remotePatterns: [{ protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/object/**" }],
     // A new photo gets a new file name, so a resized copy never goes stale
     minimumCacheTTL: 60 * 60 * 24 * 31,
   },

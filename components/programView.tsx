@@ -165,7 +165,7 @@ export function ProgramView({ program, activeDay, setActiveDay, nav, stepExtra, 
 // anything else is shown as is. No photo, or one that fails to load → the athlete's initials in the same circle.
 // alt="": the athlete's name is right beside it.
 
-const OPTIMIZABLE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/`
+const OPTIMIZABLE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/`   // public and signed links
 
 export function AthleteAvatar({ src, name, surname }: { src?: string | null; name?: string; surname?: string }) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null)   // per photo: another athlete's still loads
