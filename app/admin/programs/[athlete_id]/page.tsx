@@ -8,6 +8,7 @@ import { getAllAthletes } from '@/lib/services/athleteService'
 import Modal from '@/components/modal'
 import Menu from '@/components/menu'
 import AthleteLoginPanel from '@/components/athleteLogin'
+import AthleteRecords from '@/components/athleteRecords'
 import { ArrowLeft, Check, ClipboardList, Copy, Eye, Link, Pencil, Plus, Trash2, TriangleAlert } from 'lucide-react'
 import { ProgramViewModel } from '@/lib/viewModels/ProgramViewModel'
 import { copyText } from '@/lib/clipboard'
@@ -197,6 +198,8 @@ export default function AthleteProgramsPage() {
                 </div>
               )
           }
+
+          {athlete && <AthleteRecords athleteId={athleteId} />}
         </main>
       </div>
 
