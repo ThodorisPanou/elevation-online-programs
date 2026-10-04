@@ -1,12 +1,14 @@
 'use client'
 
 // app/me/program/[id]/page.tsx
-// One of the athlete's own programs, in the same view as the share link.
+// One of the athlete's own programs, in the same view as the share link, plus a "Log" button on the exercises the
+// coach tracks.
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { LogShell, ProgramLoader, ProgramView } from '@/components/programView'
-import { ProgramViewModel } from '@/lib/viewModels/ProgramViewModel'
+import { LogShell, ProgramLoader, ProgramView, StepExtra } from '@/components/programView'
+import { RecordLine, RecordSheet, useExerciseLogs } from '@/components/exerciseRecords'
+import { ProgramViewModel, ViewBlockExercise } from '@/lib/viewModels/ProgramViewModel'
 import { getMyProgram } from '@/lib/services/athleteAppService'
 import { MeNav } from '../../meNav'
 
@@ -16,6 +18,8 @@ export default function MyProgramPage() {
   const [program,   setProgram]   = useState<ProgramViewModel | null>(null)
   const [state,     setState]     = useState<'loading' | 'ready' | 'missing' | 'error'>('loading')
   const [activeDay, setActiveDay] = useState(0)
+  const [logging,   setLogging]   = useState<ViewBlockExercise | null>(null)
+  const records = useExerciseLogs(program)
 
   useEffect(() => {
     let cancelled = false
@@ -39,5 +43,12 @@ export default function MyProgramPage() {
     )
   }
 
-  return <ProgramView program={program} activeDay={activeDay} setActiveDay={setActiveDay} nav={<MeNav back />} />
+  const stepExtra: StepExtra = be =>
+    be.track && be.exercise?.id ? <RecordLine be={be} logs={records.of(be.exercise.id)} onLog={() => setLogging(be)} /> : null
+
+  return (
+    <ProgramView program={program} activeDay={activeDay} setActiveDay={setActiveDay} nav={<MeNav back />} stepExtra={stepExtra}>
+      {logging && <RecordSheet be={logging} records={records} onClose={() => setLogging(null)} />}
+    </ProgramView>
+  )
 }

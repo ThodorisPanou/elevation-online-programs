@@ -7,5 +7,6 @@ interface BlockExercise {
     kg?: string,
     rest_seconds?: number,
     notes?: string,
+    track?: boolean,
     order_index: number
 }

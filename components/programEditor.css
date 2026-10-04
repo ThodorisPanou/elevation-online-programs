@@ -133,7 +133,7 @@ label.eyebrow { display: block; }
 .ex-header-row,
 .exercise-row {
   display: grid; gap: 6px; align-items: center;
-  grid-template-columns: 24px 1fr 92px 54px 76px 54px 60px 68px;
+  grid-template-columns: 24px 1fr 92px 54px 76px 54px 60px 98px;
 }
 .ex-header-row { padding-bottom: 2px; }
 .ex-col-label {
@@ -159,6 +159,9 @@ label.eyebrow { display: block; }
 .ex-row-actions { display: flex; align-items: center; justify-content: flex-end; gap: 2px; }
 .ex-row-actions .btn-icon { width: 30px; height: 30px; }
 .btn-icon.btn-note.has-note { color: #d0b060; }
+.btn-icon.btn-track.is-tracked { color: var(--accent); }
+/* Over the Track toggle, the first of the row's action buttons */
+.ex-col-track { width: 34px; margin-left: 2px; text-align: center; }
 
 /* Notes and hints sit under the row, aligned with the exercise name */
 .ex-notes-input { margin-left: 30px; width: calc(100% - 30px); font-size: 13px; }
@@ -215,7 +218,7 @@ label.eyebrow { display: block; }
     /* Reps gets extra room for schemes like "15-12-10" */
     grid-template-columns: 24px minmax(0, 0.8fr) minmax(0, 1.5fr) minmax(0, 0.9fr) minmax(0, 0.9fr);
     grid-template-areas:
-      "handle name  name name  actions"
+      "handle name  name actions actions"
       ".      sets  reps kg    rest"
       ".      video video video video";
   }

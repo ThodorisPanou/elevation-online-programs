@@ -56,11 +56,16 @@ function daySummary(day: ViewDay) {
 
 export type Video = { url: string; name: string }
 
-export function ProgramView({ program, activeDay, setActiveDay, nav }: {
+// Extra content under an exercise (null for none)
+export type StepExtra = (be: ViewBlockExercise) => React.ReactNode
+
+export function ProgramView({ program, activeDay, setActiveDay, nav, stepExtra, children }: {
   program:      ProgramViewModel
   activeDay:    number
   setActiveDay: (index: number) => void
   nav?:         React.ReactNode   // top-right links, e.g. back to the athlete's program list
+  stepExtra?:   StepExtra         // athlete app: records + "Log" under tracked exercises
+  children?:    React.ReactNode   // dialogs that need the page frame's styles
 }) {
   const [video, setVideo] = useState<Video | null>(null)
   // Which way the last day change went, so the new day slides in from that side
@@ -129,7 +134,7 @@ export function ProgramView({ program, activeDay, setActiveDay, nav }: {
             <p className="log-empty">Nothing planned for this day yet.</p>
           ) : (
             currentDay.blocks.map(block => (
-              <BlockPath key={block.id} block={block} onPlayVideo={setVideo} />
+              <BlockPath key={block.id} block={block} onPlayVideo={setVideo} stepExtra={stepExtra} />
             ))
           )}
 
@@ -145,6 +150,7 @@ export function ProgramView({ program, activeDay, setActiveDay, nav }: {
       <footer className="log-foot">Glabro · Elevation Performance</footer>
 
       {video && <VideoModal video={video} onClose={() => setVideo(null)} />}
+      {children}
     </LogShell>
   )
 }
@@ -236,14 +242,18 @@ function DayChips({ days, activeDay, onSelect }: {
 
 // ─── Block ────────────────────────────────────────────────────────────────
 
-function BlockPath({ block, onPlayVideo }: { block: ViewBlock; onPlayVideo: (video: Video) => void }) {
+function BlockPath({ block, onPlayVideo, stepExtra }: {
+  block:       ViewBlock
+  onPlayVideo: (video: Video) => void
+  stepExtra?:  StepExtra
+}) {
   return (
     <div className="block">
       <h3 className="block-name">{block.name}</h3>
       {block.block_exercises.length > 0 && (
         <ol className="path">
           {block.block_exercises.map((be, i) => (
-            <ExerciseStep key={be.id} be={be} index={i} onPlayVideo={onPlayVideo} />
+            <ExerciseStep key={be.id} be={be} index={i} onPlayVideo={onPlayVideo} extra={stepExtra?.(be)} />
           ))}
         </ol>
       )}
@@ -251,10 +261,11 @@ function BlockPath({ block, onPlayVideo }: { block: ViewBlock; onPlayVideo: (vid
   )
 }
 
-function ExerciseStep({ be, index, onPlayVideo }: {
+function ExerciseStep({ be, index, onPlayVideo, extra }: {
   be:          ViewBlockExercise
   index:       number
   onPlayVideo: (video: Video) => void
+  extra?:      React.ReactNode
 }) {
   const name  = be.exercise?.name ?? '—'
   const parts = prescription(be)
@@ -276,6 +287,7 @@ function ExerciseStep({ be, index, onPlayVideo }: {
           </p>
         )}
         {be.notes && <p className="step-note">{be.notes}</p>}
+        {extra}
       </div>
       {be.exercise?.video_url && (
         <button

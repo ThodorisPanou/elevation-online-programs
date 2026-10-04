@@ -12,7 +12,7 @@ import { ExerciseCatalogueItem } from '@/lib/viewModels/ExerciseViewModel'
 import Modal from '@/components/modal'
 import { SortableItem, SortableList } from '@/components/sortable'
 import ExercisePicker from '@/components/exercisePicker'
-import { ArrowLeft, Play, Plus, StickyNote, Trash2, TriangleAlert, Upload, X } from 'lucide-react'
+import { ArrowLeft, ChartLine, Play, Plus, StickyNote, Trash2, TriangleAlert, Upload, X } from 'lucide-react'
 import './programEditor.css'
 
 interface ProgramEditorProps {
@@ -41,7 +41,7 @@ interface ProgramEditorProps {
   moveBlock:      (dayTempId: string, activeTempId: string, overTempId: string) => void
   addExercise:    (dayTempId: string, blockTempId: string) => void
   removeExercise: (dayTempId: string, blockTempId: string, idx: number) => void
-  updateExField:     (dayTempId: string, blockTempId: string, idx: number, field: keyof UIBlockExercise, value: string) => void
+  updateExField:     (dayTempId: string, blockTempId: string, idx: number, field: keyof UIBlockExercise, value: string | boolean) => void
   resolveExerciseId: (dayTempId: string, blockTempId: string, idx: number, name: string) => void
   selectExercise: (dayTempId: string, blockTempId: string, idx: number, item: ExerciseCatalogueItem) => void
   moveExercise:   (dayTempId: string, blockTempId: string, activeTempId: string, overTempId: string) => void
@@ -221,7 +221,7 @@ export default function ProgramEditor({
                                             <div className="ex-col-label">Reps</div>
                                             <div className="ex-col-label">Kg</div>
                                             <div className="ex-col-label">Rest (s)</div>
-                                            <div />
+                                            <div className="ex-col-label ex-col-track" title="Athlete logs their best set">Track</div>
                                           </div>
                                           <SortableList
                                             ids={exercises.map(e => e._tempId)}
@@ -315,7 +315,7 @@ function ExerciseRow({
   catalogue:         ExerciseCatalogueItem[]
   dayTempId:         string
   blockTempId:       string
-  updateExField:     (d: string, b: string, i: number, f: keyof UIBlockExercise, v: string) => void
+  updateExField:     (d: string, b: string, i: number, f: keyof UIBlockExercise, v: string | boolean) => void
   resolveExerciseId: (d: string, b: string, i: number, name: string) => void
   selectExercise:    (d: string, b: string, i: number, item: ExerciseCatalogueItem) => void
   removeExercise:    (d: string, b: string, i: number) => void
@@ -444,6 +444,17 @@ function ExerciseRow({
             />
 
             <div className="ex-row-actions">
+              {/* Tracked rows get a "Log" button in the athlete app: they record their best set (reps × kg) */}
+              <button
+                type="button"
+                className={`btn-icon btn-track${be.track ? ' is-tracked' : ''}`}
+                aria-label={`Track ${label}: athlete logs their best set`}
+                aria-pressed={!!be.track}
+                title={be.track ? 'Tracked: athlete logs their best set' : 'Track: athlete logs their best set'}
+                onClick={() => updateExField(dayTempId, blockTempId, idx, 'track', !be.track)}
+              >
+                <ChartLine size={15} aria-hidden />
+              </button>
               <button
                 type="button"
                 className={`btn-icon btn-note${be.notes ? ' has-note' : ''}`}

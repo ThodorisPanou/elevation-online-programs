@@ -18,6 +18,7 @@ export interface UIBlockExercise {
   kg?:           string
   rest_seconds?: string    // string while editing, parsed to number on save
   notes?:        string
+  track?:        boolean   // athlete logs their best set on this row
   _deleted?:     boolean
 }
 
@@ -65,6 +66,7 @@ export function createUIBlockExercise(): UIBlockExercise {
     kg:           '',
     rest_seconds: '',
     notes:        '',
+    track:        false,
   }
 }
 
@@ -117,6 +119,7 @@ export function mapToEditProgramViewModel(raw: any): EditProgramViewModel {
                 kg:           be.kg                   ?? '',
                 rest_seconds: be.rest_seconds?.toString() ?? '',
                 notes:        be.notes                ?? '',
+                track:        !!be.track,
               })),
           })),
       })),

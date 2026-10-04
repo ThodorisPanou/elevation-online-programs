@@ -44,7 +44,7 @@ interface UseEditProgramResult {
   // Exercise actions
   addExercise:      (dayTempId: string, blockTempId: string) => void
   removeExercise:   (dayTempId: string, blockTempId: string, idx: number) => void
-  updateExField:    (dayTempId: string, blockTempId: string, idx: number, field: keyof UIBlockExercise, value: string) => void
+  updateExField:    (dayTempId: string, blockTempId: string, idx: number, field: keyof UIBlockExercise, value: string | boolean) => void
   resolveExerciseId: (dayTempId: string, blockTempId: string, idx: number, name: string) => void
   selectExercise:   (dayTempId: string, blockTempId: string, idx: number, item: CatalogueItem) => void
   moveExercise:     (dayTempId: string, blockTempId: string, activeTempId: string, overTempId: string) => void
@@ -227,7 +227,7 @@ export function useEditProgram({
     blockTempId: string,
     idx:         number,
     field:       keyof UIBlockExercise,
-    value:       string,
+    value:       string | boolean,   // boolean only for 'track'
   ) =>
     setDays(prev => prev.map(d => {
       if (d._tempId !== dayTempId) return d
@@ -240,10 +240,11 @@ export function useEditProgram({
             exercises: b.exercises.map((ex, i) => {
               if (i !== idx) return ex
               if (field === 'exerciseName') {
-                const matched = matchByName(catalogueRef.current, value)
+                const name    = value as string
+                const matched = matchByName(catalogueRef.current, name)
                 return {
                   ...ex,
-                  exerciseName: value,
+                  exerciseName: name,
                   exerciseId:   matched?.id        ?? '',
                   video_url:    matched?.video_url ?? undefined,
                 }

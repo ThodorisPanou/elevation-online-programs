@@ -16,6 +16,7 @@ export interface ViewBlockExercise {
   kg?:           string
   rest_seconds?: number
   notes?:        string
+  track?:        boolean   // the athlete logs their best set here (athlete app only)
   exercise:      ViewExercise
 }
 
@@ -96,6 +97,7 @@ export function mapToProgramViewModel(raw: any): ProgramViewModel {
                 kg:           be.kg            ?? undefined,
                 rest_seconds: be.rest_seconds  ?? undefined,
                 notes:        be.notes         ?? undefined,
+                track:        !!be.track,
                 // Supabase returns the joined row as `exercises` (table name)
                 exercise: {
                   id:        be.exercises?.id,

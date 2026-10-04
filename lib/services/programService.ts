@@ -70,7 +70,7 @@ export async function getProgramRawById(id: string): Promise<any | null> {
         blocks (
           id, name, order_index,
           block_exercises (
-            id, sets, reps, kg, rest_seconds, notes, order_index,
+            id, sets, reps, kg, rest_seconds, notes, order_index, track,
             exercises ( id, name, video_url )
           )
         )
@@ -267,6 +267,7 @@ async function saveBlockExercises(blockId: string, exercises: UIBlockExercise[],
       kg:           ex.kg           || null,
       rest_seconds: ex.rest_seconds ? parseInt(ex.rest_seconds) : null,
       notes:        ex.notes        || null,
+      track:        !!ex.track,
       order_index:  ei,
     }
 
@@ -302,7 +303,7 @@ export async function copyProgram(programId: string, targetAthleteId: string): P
         blocks (
           name, order_index,
           block_exercises (
-            sets, reps, kg, rest_seconds, notes, order_index, exercise_id
+            sets, reps, kg, rest_seconds, notes, order_index, exercise_id, track
           )
         )
       )
@@ -351,6 +352,7 @@ export async function copyProgram(programId: string, targetAthleteId: string): P
         kg:           be.kg,
         rest_seconds: be.rest_seconds,
         notes:        be.notes,
+        track:        be.track,
         order_index:  be.order_index,
       }))
 

@@ -64,3 +64,62 @@ export async function signInWithLoginLink(token: string): Promise<void> {
   const { error } = await supabase.auth.verifyOtp({ token_hash: json.tokenHash, type: 'magiclink' })
   if (error) throw error
 }
+
+// ─── Exercise records ─────────────────────────────────────────────────────
+// The athlete's best set on a tracked exercise (migration D). History belongs to the exercise, across programs.
+
+export interface ExerciseLog {
+  id:                string
+  exercise_id:       string
+  block_exercise_id: string | null
+  performed_on:      string   // YYYY-MM-DD
+  reps:              number
+  kg:                number
+  note:              string | null
+  created_at:        string
+}
+
+export interface ExerciseLogInput {
+  performed_on: string
+  reps:         number
+  kg:           number
+  note?:        string
+}
+
+// The database's messages for bad values are written for the athlete; anything else gets a generic one
+export class LogInputError extends Error {}
+function logError(where: string, error: { code?: string; message: string }): Error {
+  if (error.code === '23514') return new LogInputError(error.message)
+  console.error(`${where}:`, error)
+  return new Error('Couldn’t save. Check your connection and try again.')
+}
+
+/** Own records of these exercises, newest first. */
+export async function getMyExerciseLogs(exerciseIds: string[]): Promise<ExerciseLog[]> {
+  if (exerciseIds.length === 0) return []
+  const { data, error } = await supabase.rpc('get_my_exercise_logs', { p_exercise_ids: exerciseIds })
+  if (error) { console.error('getMyExerciseLogs:', error); throw error }
+  return (data ?? []) as ExerciseLog[]
+}
+
+export async function logExercise(blockExerciseId: string, input: ExerciseLogInput): Promise<ExerciseLog> {
+  const { data, error } = await supabase.rpc('log_exercise', {
+    p_block_exercise_id: blockExerciseId, p_performed_on: input.performed_on,
+    p_reps: input.reps, p_kg: input.kg, p_note: input.note ?? null,
+  })
+  if (error) throw logError('logExercise', error)
+  return data as ExerciseLog
+}
+
+export async function updateMyExerciseLog(id: string, input: ExerciseLogInput): Promise<ExerciseLog> {
+  const { data, error } = await supabase.rpc('update_my_exercise_log', {
+    p_id: id, p_performed_on: input.performed_on, p_reps: input.reps, p_kg: input.kg, p_note: input.note ?? null,
+  })
+  if (error) throw logError('updateMyExerciseLog', error)
+  return data as ExerciseLog
+}
+
+export async function deleteMyExerciseLog(id: string): Promise<void> {
+  const { error } = await supabase.rpc('delete_my_exercise_log', { p_id: id })
+  if (error) throw logError('deleteMyExerciseLog', error)
+}
