@@ -82,3 +82,8 @@
   margin-left: 8px; padding: 1px 7px; border-radius: 999px; vertical-align: 1px;
   font-size: 12px; font-weight: 600; color: var(--log-accent); background: var(--log-accent-soft);
 }
+
+/* ── Athlete's progress list on /me (rows reuse the program-list cards) ── */
+
+.rec-progress { width: 100%; font: inherit; text-align: left; cursor: pointer; }
+.rec-progress-best { font-size: 15px; color: var(--log-text); }

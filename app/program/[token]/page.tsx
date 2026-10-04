@@ -37,9 +37,9 @@ export default function PublicProgramPage() {
     <ProgramView program={program} activeDay={activeDay} setActiveDay={setActiveDay} stepExtra={stepExtra}>
       {history && (
         <RecordHistorySheet
-          be={history}
+          name={history.exercise?.name ?? 'Exercise'}
+          subtitle={`${program.athlete?.name ?? 'The athlete'}’s best sets, from every program`}
           logs={logsOf(history)}
-          athleteName={program.athlete?.name ?? 'The athlete'}
           onClose={() => setHistory(null)}
         />
       )}

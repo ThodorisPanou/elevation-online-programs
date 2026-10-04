@@ -102,6 +102,13 @@ export async function getMyExerciseLogs(exerciseIds: string[]): Promise<Exercise
   return (data ?? []) as ExerciseLog[]
 }
 
+/** All own records with the exercise's name, newest first — the progress list on /me. */
+export async function getMyExerciseHistory(): Promise<(ExerciseLog & { exercise_name: string })[]> {
+  const { data, error } = await supabase.rpc('get_my_exercise_history')
+  if (error) { console.error('getMyExerciseHistory:', error); throw error }
+  return (data ?? []) as (ExerciseLog & { exercise_name: string })[]
+}
+
 export async function logExercise(blockExerciseId: string, input: ExerciseLogInput): Promise<ExerciseLog> {
   const { data, error } = await supabase.rpc('log_exercise', {
     p_block_exercise_id: blockExerciseId, p_performed_on: input.performed_on,

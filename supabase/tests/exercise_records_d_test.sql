@@ -65,6 +65,8 @@ update fx set b_row = (
 update fx set other_exercise_id = (
   select e.id from public.exercises e join public.athletes a on a.coach_id = e.coach_id
   where a.id = fx.a_id and e.id <> fx.exercise_id order by e.id limit 1);
+alter table fx add column exercise_name text;
+update fx set exercise_name = (select name from public.exercises where id = fx.exercise_id);
 grant select on fx to anon, authenticated;
 
 insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
@@ -168,6 +170,11 @@ select pg_temp.check(
    from (select public.get_my_exercise_logs(array[(select exercise_id from fx)]) l) x),
   'own records: all three, newest first');
 
+select pg_temp.check(
+  (select jsonb_array_length(h) = 3 and h->0->>'exercise_name' = (select exercise_name from fx)
+   from (select public.get_my_exercise_history() h) x),
+  'own history: all records with the exercise name');
+
 select pg_temp.check((select count(*) = 0 from public.exercise_logs), 'athlete can''t read the table directly');
 
 do $$ begin
@@ -189,6 +196,7 @@ select pg_temp.act_as((select b_user from fx));
 select pg_temp.check(
   (select public.get_my_exercise_logs(array[(select exercise_id from fx)]) = '[]'::jsonb),
   'another athlete sees none of A''s records');
+select pg_temp.check((select public.get_my_exercise_history() = '[]'::jsonb), 'another athlete''s history: none of A''s');
 
 do $$ begin
   perform public.update_my_exercise_log((select (j->>'id')::uuid from logged), current_date, 1, 1);
@@ -293,6 +301,12 @@ do $$ begin
   perform pg_temp.check(false, 'anon can''t call get_my_exercise_logs');
 exception when insufficient_privilege then
   perform pg_temp.check(true, 'anon can''t call get_my_exercise_logs');
+end $$;
+do $$ begin
+  perform public.get_my_exercise_history();
+  perform pg_temp.check(false, 'anon can''t call get_my_exercise_history');
+exception when insufficient_privilege then
+  perform pg_temp.check(true, 'anon can''t call get_my_exercise_history');
 end $$;
 do $$ begin
   perform count(*) from public.exercise_logs;

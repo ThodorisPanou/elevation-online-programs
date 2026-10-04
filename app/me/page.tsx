@@ -1,7 +1,7 @@
 'use client'
 
 // app/me/page.tsx
-// The athlete's home: all their programs, newest first. Read-only.
+// The athlete's home: all their programs, newest first, and their progress on the exercises they log.
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -12,6 +12,7 @@ import { MyProgramSummary, getMyPrograms } from '@/lib/services/athleteAppServic
 import { MeNav } from './meNav'
 import { InstallHint } from './installHint'
 import { PasswordCard } from './passwordCard'
+import { MyProgress } from '@/components/exerciseRecords'
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -67,6 +68,8 @@ export default function MyProgramsPage() {
           ))}
         </ul>
       )}
+
+      <MyProgress />
 
       <footer className="log-foot">Glabro · Elevation Performance</footer>
     </LogShell>

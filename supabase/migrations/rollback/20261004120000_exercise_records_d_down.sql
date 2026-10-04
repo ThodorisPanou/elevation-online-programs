@@ -3,6 +3,7 @@
 -- Deploy the app WITHOUT exercise records first: the new app reads the column and calls the functions dropped here.
 
 -- Athlete writes / reads
+drop function if exists public.get_my_exercise_history();
 drop function if exists public.get_my_exercise_logs(uuid[]);
 drop function if exists public.delete_my_exercise_log(uuid);
 drop function if exists public.update_my_exercise_log(uuid, date, integer, numeric, text);

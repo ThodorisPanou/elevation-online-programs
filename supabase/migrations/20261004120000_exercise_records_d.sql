@@ -190,6 +190,18 @@ as $$
   where l.athlete_id = public.my_athlete_id() and l.exercise_id = any (p_exercise_ids)
 $$;
 
+-- All own records with the exercise's name, newest first — the athlete's progress page
+create function public.get_my_exercise_history() returns jsonb
+  language sql stable security definer set search_path = ''
+as $$
+  select coalesce(jsonb_agg(
+    public.exercise_log_json(l) || jsonb_build_object('exercise_name', e.name)
+    order by l.performed_on desc, l.created_at desc), '[]'::jsonb)
+  from public.exercise_logs l
+  join public.exercises e on e.id = l.exercise_id
+  where l.athlete_id = public.my_athlete_id()
+$$;
+
 -- ─── 5. Privileges ──────────────────────────────────────────────────────────
 
 revoke execute on function public.check_exercise_log(date, integer, numeric, text),
@@ -197,7 +209,7 @@ revoke execute on function public.check_exercise_log(date, integer, numeric, tex
 
 revoke execute on function public.log_exercise(uuid, date, integer, numeric, text),
   public.update_my_exercise_log(uuid, date, integer, numeric, text), public.delete_my_exercise_log(uuid),
-  public.get_my_exercise_logs(uuid[]) from public, anon;
+  public.get_my_exercise_logs(uuid[]), public.get_my_exercise_history() from public, anon;
 grant execute on function public.log_exercise(uuid, date, integer, numeric, text),
   public.update_my_exercise_log(uuid, date, integer, numeric, text), public.delete_my_exercise_log(uuid),
-  public.get_my_exercise_logs(uuid[]) to authenticated;
+  public.get_my_exercise_logs(uuid[]), public.get_my_exercise_history() to authenticated;

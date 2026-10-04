@@ -6,12 +6,12 @@
 // deletes the athlete's own records. Uses the athlete app's dialog/form styles (app/me/me.css).
 
 import { FormEvent, useEffect, useMemo, useState } from 'react'
-import { Plus } from 'lucide-react'
+import { ChevronRight, Plus } from 'lucide-react'
 import Modal from '@/components/modal'
 import { ProgramViewModel, ViewBlockExercise } from '@/lib/viewModels/ProgramViewModel'
 import {
   ExerciseLog, ExerciseLogInput, LogInputError,
-  deleteMyExerciseLog, getMyExerciseLogs, logExercise, updateMyExerciseLog,
+  deleteMyExerciseLog, getMyExerciseHistory, getMyExerciseLogs, logExercise, updateMyExerciseLog,
 } from '@/lib/services/athleteAppService'
 import '@/app/me/me.css'   // dialog + form styles, also needed on the coach's program view
 import './exerciseRecords.css'
@@ -320,23 +320,81 @@ function History<T extends RecordLike>({ logs, onPick, pickedId }: { logs: T[]; 
   )
 }
 
-// ─── Coach: read-only history ─────────────────────────────────────────────
+// ─── Read-only history (coach's program view, athlete's progress) ─────────
 
-export function RecordHistorySheet({ be, logs, athleteName, onClose }: {
-  be:          ViewBlockExercise
-  logs:        RecordLike[]   // newest first
-  athleteName: string
-  onClose:     () => void
+export function RecordHistorySheet({ name, subtitle, logs, onClose }: {
+  name:     string
+  subtitle: string
+  logs:     RecordLike[]   // newest first
+  onClose:  () => void
 }) {
-  const name = be.exercise?.name ?? 'Exercise'
   return (
     <Modal onClose={onClose} title={`${name}: records`} className="me-dialog rec-sheet" overlayClassName="me-dialog-overlay">
       <h2 className="me-dialog-title">{name}</h2>
-      <p className="rec-sheet-sub">{athleteName}’s best sets, from every program</p>
+      <p className="rec-sheet-sub">{subtitle}</p>
       <History logs={logs} />
       <div className="me-dialog-actions">
         <button type="button" className="me-button is-quiet" onClick={onClose} data-autofocus>Close</button>
       </div>
     </Modal>
+  )
+}
+
+// ─── Athlete: progress on /me ─────────────────────────────────────────────
+// Every exercise they've logged (most recently trained first): best, count, last; tap → its history.
+
+type HistoryLog = ExerciseLog & { exercise_name: string }
+
+export function MyProgress() {
+  const [logs, setLogs] = useState<HistoryLog[] | null>(null)
+  const [open, setOpen] = useState<string | null>(null)   // exercise id
+
+  useEffect(() => {
+    let cancelled = false
+    getMyExerciseHistory()
+      .then(l => { if (!cancelled) setLogs(l) })
+      .catch(() => {})   // extra on the home page: the programs still show without it
+    return () => { cancelled = true }
+  }, [])
+
+  // Logs arrive newest first, so the Map keeps "most recently trained" order
+  const groups = useMemo(() => {
+    const byExercise = new Map<string, HistoryLog[]>()
+    for (const l of logs ?? []) byExercise.set(l.exercise_id, [...(byExercise.get(l.exercise_id) ?? []), l])
+    return [...byExercise.values()].map(ls => ({ id: ls[0].exercise_id, name: ls[0].exercise_name, logs: ls, best: best(ls)! }))
+  }, [logs])
+
+  // Nothing logged yet → no section (the Log button on tracked exercises is where it starts)
+  if (groups.length === 0) return null
+  const current = groups.find(g => g.id === open)
+
+  return (
+    <>
+      <h2 className="me-section">Your progress</h2>
+      <ul className="me-programs">
+        {groups.map(g => (
+          <li key={g.id}>
+            <button type="button" className="me-program rec-progress" onClick={() => setOpen(g.id)}>
+              <span className="me-program-text">
+                <span className="me-program-title">{g.name}</span>
+                <span className="rec-progress-best"><span className="rec-key">Best</span> {formatSet(g.best)}</span>
+                <span className="me-program-meta">
+                  {g.logs.length} record{g.logs.length !== 1 ? 's' : ''} · last {formatDay(g.logs[0].performed_on).replace(/^Today$/, 'today')}
+                </span>
+              </span>
+              <ChevronRight size={20} aria-hidden className="me-program-chevron" />
+            </button>
+          </li>
+        ))}
+      </ul>
+      {current && (
+        <RecordHistorySheet
+          name={current.name}
+          subtitle="Your best sets, from every program"
+          logs={current.logs}
+          onClose={() => setOpen(null)}
+        />
+      )}
+    </>
   )
 }
