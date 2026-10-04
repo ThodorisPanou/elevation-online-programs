@@ -55,11 +55,15 @@
   text-wrap: balance; overflow-wrap: anywhere;
 }
 .log-program { margin: 6px 0 0; font-size: 17px; font-weight: 500; line-height: 1.4; color: var(--log-muted); }
-.log-coach   { margin: 4px 0 0; font-size: 14px; line-height: 1.45; color: var(--log-faint); }
+.log-coach   { margin: 8px 0 0; font-size: 15px; line-height: 1.45; color: var(--log-faint); }
+/* The coach matters to the athlete: the one place this page uses bold */
+.log-coach-name { font-weight: 700; color: var(--log-text); }
 
 .log-avatar {
-  width: 60px; height: 60px; flex-shrink: 0; border-radius: 50%; object-fit: cover;
-  box-shadow: 0 0 0 1px var(--log-line);
+  width: 96px; height: 96px; flex-shrink: 0; border-radius: 50%; object-fit: cover;
+  background: var(--log-raised);
+  /* A mint ring with a gap, like a bead on the program's thread, and a soft lift off the background */
+  box-shadow: 0 0 0 3px var(--log-bg), 0 0 0 5px #8fd4b880, 0 12px 32px rgba(0, 0, 0, 0.45);
 }
 
 .log-brief {
@@ -196,7 +200,7 @@
   }
   .log-top { margin-bottom: 32px; }
   .day-chips { margin-left: -20px; margin-right: -20px; padding-left: 20px; padding-right: 20px; }
-  .log-avatar { width: 52px; height: 52px; }
+  .log-avatar { width: 80px; height: 80px; }
   .step { column-gap: 12px; }
 }
 

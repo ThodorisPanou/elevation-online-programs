@@ -106,7 +106,7 @@ export function ProgramView({ program, activeDay, setActiveDay, nav, stepExtra, 
         <div className="log-head-text">
           <h1 className="log-athlete">{athlete?.name} {athlete?.surname}</h1>
           <p className="log-program">{program.title}</p>
-          {program.coach_name && <p className="log-coach">Coached by {program.coach_name}</p>}
+          {program.coach_name && <p className="log-coach">Coached by <strong className="log-coach-name">{program.coach_name}</strong></p>}
         </div>
         {athlete?.avatar_url && <img className="log-avatar" src={athlete.avatar_url} alt="" />}
       </header>

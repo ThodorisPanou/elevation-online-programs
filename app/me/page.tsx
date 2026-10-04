@@ -31,7 +31,7 @@ export default function MyProgramsPage() {
       <header className="log-head">
         <div className="log-head-text">
           <h1 className="log-athlete">{athlete.name} {athlete.surname}</h1>
-          {athlete.coach_name && <p className="log-program">Coached by {athlete.coach_name}</p>}
+          {athlete.coach_name && <p className="log-coach">Coached by <strong className="log-coach-name">{athlete.coach_name}</strong></p>}
         </div>
         {athlete.avatar_url && <img className="log-avatar" src={athlete.avatar_url} alt="" />}
       </header>
