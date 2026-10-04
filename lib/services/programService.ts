@@ -9,6 +9,7 @@ import { EditProgramViewModel, UIDay, UIBlock, UIBlockExercise } from '@/lib/vie
 const PROGRAM_QUERY = `
   id, title, description, public_token, created_at,
   athletes ( id, name, surname, avatar_url ),
+  coaches ( name ),
   program_days (
     id, name, order_index,
     blocks (

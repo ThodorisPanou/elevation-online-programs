@@ -9,6 +9,7 @@
 
 import { useEffect, useState } from 'react'
 import { Share, SquarePlus, X } from 'lucide-react'
+import { APP_SHORT_NAME } from '@/lib/brand'
 
 const DISMISS_KEY  = 'glabro.installHint.dismissedAt'
 const DISMISS_DAYS = 7
@@ -68,7 +69,7 @@ export function InstallHint() {
       <button className="install-close" onClick={dismiss} aria-label="Hide for now">
         <X size={18} aria-hidden />
       </button>
-      <h2 id="install-title" className="install-title">Add Glabro to your Home Screen</h2>
+      <h2 id="install-title" className="install-title">Add {APP_SHORT_NAME} to your Home Screen</h2>
       <p className="install-text">
         Open your programs from the app icon and you’ll stay logged in.
       </p>
@@ -83,7 +84,7 @@ export function InstallHint() {
             Choose <span className="install-key"><SquarePlus size={16} aria-hidden /> Add to Home Screen</span>, then
             {' '}<span className="install-key">Add</span>.
           </li>
-          <li>Open <strong className="me-strong">Glabro</strong> from your Home Screen from now on.</li>
+          <li>Open <strong className="me-strong">{APP_SHORT_NAME}</strong> from your Home Screen from now on.</li>
         </ol>
       ) : (
         <button className="me-button install-button" onClick={install}>Install app</button>

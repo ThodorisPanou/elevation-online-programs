@@ -9,6 +9,7 @@ import { Manrope } from 'next/font/google'
 import { ProgramViewModel, ViewBlock, ViewBlockExercise, ViewDay } from '@/lib/viewModels/ProgramViewModel'
 import Modal from '@/components/modal'
 import { ArrowRight, Play, X } from 'lucide-react'
+import { APP_NAME, APP_SHORT_NAME } from '@/lib/brand'
 import './programView.css'
 
 // Carries Greek, so athlete and exercise names never fall back to a different face
@@ -104,6 +105,7 @@ export function ProgramView({ program, activeDay, setActiveDay, nav, stepExtra, 
         <div className="log-head-text">
           <h1 className="log-athlete">{athlete?.name} {athlete?.surname}</h1>
           <p className="log-program">{program.title}</p>
+          {program.coach_name && <p className="log-coach">Coached by {program.coach_name}</p>}
         </div>
         {athlete?.avatar_url && <img className="log-avatar" src={athlete.avatar_url} alt="" />}
       </header>
@@ -147,7 +149,7 @@ export function ProgramView({ program, activeDay, setActiveDay, nav, stepExtra, 
         </section>
       )}
 
-      <footer className="log-foot">Glabro · Elevation Performance</footer>
+      <footer className="log-foot">{APP_NAME}</footer>
 
       {video && <VideoModal video={video} onClose={() => setVideo(null)} />}
       {children}
@@ -165,7 +167,7 @@ export function LogShell({ children, busy = false, nav }: {
     <div className={`log ${manrope.variable}`}>
       <main className="log-inner" aria-busy={busy || undefined}>
         <div className="log-top">
-          <p className="log-mark">Glabro</p>
+          <p className="log-mark">{APP_SHORT_NAME}</p>
           {nav && <nav className="log-nav" aria-label="Account">{nav}</nav>}
         </div>
         {children}

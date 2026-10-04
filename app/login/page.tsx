@@ -7,6 +7,7 @@ import { TriangleAlert } from "lucide-react"
 import { toLoginEmail } from "@/lib/logins"
 import { getMe } from "@/lib/services/coachService"
 import { LinkSignIn } from "./linkSignIn"
+import { APP_NAME } from "@/lib/brand"
 import "./login.css"
 
 // Set by app/admin/layout.tsx when it signs someone out
@@ -53,7 +54,7 @@ function LoginForm() {
     <div className="page login-page">
       <div className="login-stack">
       <form className="login-card" onSubmit={handleLogin}>
-        <div className="logo">Glabro</div>
+        <div className="logo">{APP_NAME}</div>
         <h1 className="login-title">Sign in</h1>
 
         <div className="field">

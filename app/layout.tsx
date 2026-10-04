@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { APP_DESCRIPTION, APP_NAME, APP_SHORT_NAME } from "@/lib/brand";
 import { Barlow, Barlow_Condensed } from "next/font/google";
 import "./globals.css";
 
@@ -15,10 +16,10 @@ const barlowCondensed = Barlow_Condensed({
 });
 
 export const metadata: Metadata = {
-  title: "Glabro Online Programs",
-  description: "Glabro - Elevation Performance",
+  title: APP_NAME,
+  description: APP_DESCRIPTION,
   // Installed on an iPhone home screen (manifest: app/manifest.ts): full screen, own name, dark status bar
-  appleWebApp: { capable: true, title: "Glabro", statusBarStyle: "black" },
+  appleWebApp: { capable: true, title: APP_SHORT_NAME, statusBarStyle: "black" },
   // Next emits only the standard mobile-web-app-capable; iOS before 16.4 needs the apple- one
   other: { "apple-mobile-web-app-capable": "yes" },
 };

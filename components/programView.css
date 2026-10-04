@@ -55,6 +55,7 @@
   text-wrap: balance; overflow-wrap: anywhere;
 }
 .log-program { margin: 6px 0 0; font-size: 17px; font-weight: 500; line-height: 1.4; color: var(--log-muted); }
+.log-coach   { margin: 4px 0 0; font-size: 14px; line-height: 1.45; color: var(--log-faint); }
 
 .log-avatar {
   width: 60px; height: 60px; flex-shrink: 0; border-radius: 50%; object-fit: cover;

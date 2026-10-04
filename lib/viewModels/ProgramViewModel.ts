@@ -47,6 +47,7 @@ export interface ProgramViewModel {
   description?: string
   public_token: string
   created_at:   string
+  coach_name?:  string      // the coach's display name ("Coached by …"), never the username
   athlete:      ViewAthlete
   days:         ViewDay[]   // pre-sorted by order_index
 }
@@ -64,6 +65,8 @@ export function mapToProgramViewModel(raw: any): ProgramViewModel {
     description:  raw.description ?? undefined,
     public_token: raw.public_token,
     created_at:   raw.created_at,
+    // program_json() sends coach_name; the coach's own query by id joins coaches
+    coach_name:   raw.coach_name ?? raw.coaches?.name ?? undefined,
 
     // Supabase names the joined row after the table: `athletes`, not `athlete`
     athlete: {

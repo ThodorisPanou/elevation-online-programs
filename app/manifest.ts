@@ -4,11 +4,12 @@
 
 import type { MetadataRoute } from 'next'
 import { ICON_BG } from '@/lib/appIcon'
+import { APP_NAME, APP_SHORT_NAME } from '@/lib/brand'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name:             'Glabro Training',
-    short_name:       'Glabro',
+    name:             APP_NAME,
+    short_name:       APP_SHORT_NAME,
     description:      'Your training programs from your coach',
     start_url:        '/me',
     scope:            '/',
