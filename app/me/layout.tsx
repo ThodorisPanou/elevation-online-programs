@@ -14,7 +14,7 @@ import { AthleteMeContext } from '@/lib/hooks/useAthleteMe'
 import { LogShell } from '@/components/programView'
 import './me.css'
 
-type Resolved = { athlete: MyAthlete } | { goTo: string } | { signOut: true } | { error: string }
+type Resolved = { athlete: MyAthlete; hasPassword: boolean } | { goTo: string } | { signOut: true } | { error: string }
 
 async function resolveAthlete(): Promise<Resolved> {
   const { data: { session } } = await supabase.auth.getSession()
@@ -26,7 +26,7 @@ async function resolveAthlete(): Promise<Resolved> {
     if (!me.athlete || me.athlete.login_disabled) return { signOut: true }
 
     const athlete = await getMyAthlete()
-    return athlete ? { athlete } : { signOut: true }
+    return athlete ? { athlete, hasPassword: me.athlete.has_password } : { signOut: true }
   } catch (e) {
     return { error: e instanceof Error ? e.message : 'Could not load your account' }
   }
@@ -34,8 +34,9 @@ async function resolveAthlete(): Promise<Resolved> {
 
 export default function MeLayout({ children }: { children: ReactNode }) {
   const router = useRouter()
-  const [athlete, setAthlete] = useState<MyAthlete | null>(null)
-  const [error,   setError]   = useState<string | null>(null)
+  const [athlete,     setAthlete]     = useState<MyAthlete | null>(null)
+  const [hasPassword, setHasPassword] = useState(false)
+  const [error,       setError]       = useState<string | null>(null)
 
   const signOut = useCallback(async (reason?: string) => {
     await supabase.auth.signOut()
@@ -44,7 +45,7 @@ export default function MeLayout({ children }: { children: ReactNode }) {
 
   const load = useCallback(
     () => resolveAthlete().then(result => {
-      if ('athlete' in result)    setAthlete(result.athlete)
+      if ('athlete' in result)    { setAthlete(result.athlete); setHasPassword(result.hasPassword) }
       else if ('goTo' in result)  router.replace(result.goTo)
       else if ('error' in result) setError(result.error)
       else                        signOut('no-access')
@@ -60,7 +61,12 @@ export default function MeLayout({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe()
   }, [load, router])
 
-  const value = useMemo(() => athlete && { athlete, signOut: () => signOut() }, [athlete, signOut])
+  const value = useMemo(() => athlete && {
+    athlete,
+    hasPassword,
+    markPasswordSet: () => setHasPassword(true),
+    signOut:         () => signOut(),
+  }, [athlete, hasPassword, signOut])
 
   if (error) {
     return (

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { TriangleAlert } from "lucide-react"
 import { toLoginEmail } from "@/lib/logins"
 import { getMe } from "@/lib/services/coachService"
+import { LinkSignIn } from "./linkSignIn"
 import "./login.css"
 
 // Set by app/admin/layout.tsx when it signs someone out
@@ -50,6 +51,7 @@ function LoginForm() {
 
   return (
     <div className="page login-page">
+      <div className="login-stack">
       <form className="login-card" onSubmit={handleLogin}>
         <div className="logo">Glabro</div>
         <h1 className="login-title">Sign in</h1>
@@ -94,6 +96,9 @@ function LoginForm() {
           {loading ? "Signing in…" : "Sign in"}
         </button>
       </form>
+
+      <LinkSignIn />
+      </div>
     </div>
   )
 }

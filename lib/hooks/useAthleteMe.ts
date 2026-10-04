@@ -7,8 +7,10 @@ import { createContext, useContext } from 'react'
 import type { MyAthlete } from '@/lib/services/athleteAppService'
 
 export interface AthleteMeState {
-  athlete: MyAthlete
-  signOut: () => Promise<void>
+  athlete:         MyAthlete
+  hasPassword:     boolean      // false until they set one (they start with login links only)
+  markPasswordSet: () => void
+  signOut:         () => Promise<void>
 }
 
 export const AthleteMeContext = createContext<AthleteMeState | null>(null)

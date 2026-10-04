@@ -21,6 +21,7 @@ export interface Me {
     id:             string
     username:       string | null
     login_disabled: boolean
+    has_password:   boolean
   } | null
 }
 

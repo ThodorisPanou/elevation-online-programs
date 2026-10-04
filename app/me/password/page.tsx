@@ -12,7 +12,7 @@ import { PASSWORD_MAX, passwordProblem } from '@/lib/logins'
 import { MeNav } from '../meNav'
 
 export default function MyPasswordPage() {
-  const { athlete } = useAthleteMe()
+  const { athlete, hasPassword, markPasswordSet } = useAthleteMe()
   const [password, setPassword] = useState('')
   const [repeat,   setRepeat]   = useState('')
   const [saving,   setSaving]   = useState(false)
@@ -27,7 +27,7 @@ export default function MyPasswordPage() {
     setSaving(true); setError(null)
     try {
       await changeMyPassword(password)
-      setDone(true); setPassword(''); setRepeat('')
+      setDone(true); setPassword(''); setRepeat(''); markPasswordSet()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save the password')
     } finally {
@@ -37,11 +37,11 @@ export default function MyPasswordPage() {
 
   return (
     <LogShell nav={<MeNav back />}>
-      <h1 className="log-athlete">Password</h1>
+      <h1 className="log-athlete">{hasPassword ? 'Change password' : 'Set a password'}</h1>
       <p className="log-brief">
-        Optional. With a password you can also sign in with your username
-        {athlete.username && <> <strong className="me-strong">{athlete.username}</strong></>} — for example on
-        another phone. Your coach can always send you a new login link instead.
+        With a password you can always sign back in with your username
+        {athlete.username && <> <strong className="me-strong">{athlete.username}</strong></>} — after signing
+        out, or on another phone. Without one, you need a new login link from your coach.
       </p>
 
       <form className="me-form" onSubmit={submit}>

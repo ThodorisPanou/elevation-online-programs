@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireUser } from '@/lib/server/auth'
 
 // → { email, isAdmin, coach: { id, username, name, active, must_change_password } | null,
-//     athlete: { id, username, login_disabled } | null }
+//     athlete: { id, username, login_disabled, has_password } | null }
 export async function GET(req: NextRequest) {
   const caller = await requireUser(req)
   if (caller instanceof NextResponse) return caller
@@ -25,6 +25,8 @@ export async function GET(req: NextRequest) {
       id:             athlete.id,
       username:       athlete.username,
       login_disabled: athlete.login_disabled,
+      // Set by /api/me/password; athletes created by a login link have none
+      has_password:   user.app_metadata?.has_password === true,
     },
   })
 }

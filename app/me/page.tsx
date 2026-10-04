@@ -11,6 +11,7 @@ import { useAthleteMe } from '@/lib/hooks/useAthleteMe'
 import { MyProgramSummary, getMyPrograms } from '@/lib/services/athleteAppService'
 import { MeNav } from './meNav'
 import { InstallHint } from './installHint'
+import { PasswordCard } from './passwordCard'
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -35,6 +36,7 @@ export default function MyProgramsPage() {
       </header>
 
       <InstallHint />
+      <PasswordCard />
 
       <h2 className="me-section">Your programs</h2>
 

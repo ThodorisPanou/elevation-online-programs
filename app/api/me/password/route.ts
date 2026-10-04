@@ -33,7 +33,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Choose a password different from the current one' }, { status: 400 })
     }
 
-    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(caller.user.id, { password })
+    // has_password: athletes start without one (login links); the athlete app nudges them until it's set.
+    // app_metadata is writable only with the service role.
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(caller.user.id, {
+      password,
+      app_metadata: { ...caller.user.app_metadata, has_password: true },
+    })
     if (authError) throw authError
 
     if (caller.coach?.must_change_password) {
