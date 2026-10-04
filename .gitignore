@@ -45,3 +45,6 @@ TODO.md
 
 # Production database dumps (personal data — never commit)
 /backups/
+
+# Impeccable design skill working files (screenshots, briefs, mocks)
+/.impeccable/

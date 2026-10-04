@@ -1,13 +1,20 @@
 'use client'
 
 // components/programView.tsx
-// Read-only program UI shared by the public page and the admin program page.
+// Read-only program UI shared by the public page and the admin preview. A calm, dark training log: each block is
+// a short path of exercises on one thread, and the numbers read as a plain sentence ("3 sets · 8–10 reps").
 
-import React, { useState } from 'react'
-import { ProgramViewModel, ViewBlock, ViewDay } from '@/lib/viewModels/ProgramViewModel'
+import React, { KeyboardEvent, TouchEvent, useRef, useState } from 'react'
+import { Manrope } from 'next/font/google'
+import { ProgramViewModel, ViewBlock, ViewBlockExercise, ViewDay } from '@/lib/viewModels/ProgramViewModel'
 import Modal from '@/components/modal'
-import { ClipboardList, Play, StickyNote, X } from 'lucide-react'
+import { ArrowRight, Play, X } from 'lucide-react'
 import './programView.css'
+
+// Carries Greek, so athlete and exercise names never fall back to a different face
+const manrope = Manrope({ subsets: ['latin', 'latin-ext', 'greek'], variable: '--font-log' })
+
+// ─── Formatting ───────────────────────────────────────────────────────────
 
 // 45 → "45s", 90 → "1:30", 120 → "2:00"
 function formatRest(seconds: number) {
@@ -15,174 +22,268 @@ function formatRest(seconds: number) {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
 }
 
-// ─── Hero ─────────────────────────────────────────────────────────────────
+// Plain numbers and ranges ("8", "8-10", "60/70") get a unit; anything else ("AMRAP", "RPE 8", "70%") is shown
+// exactly as the coach typed it
+const NUMERIC = /^\d+([.,]\d+)?(\s*[-–/]\s*\d+([.,]\d+)?)*$/
 
-export function ProgramHero({ program, compact = false }: {
-  program: ProgramViewModel
-  compact?: boolean
-}) {
-  const { athlete, days } = program
-  const initials = `${athlete?.name?.[0] ?? ''}${athlete?.surname?.[0] ?? ''}`
+// En dash for ranges: "8-10" → "8–10"
+const range = (s: string) => s.replace(/(\d)\s*-\s*(\d)/g, '$1–$2')
 
-  return (
-    <div className={`program-hero${compact ? ' compact' : ''}`}>
-      <div className="program-hero-inner">
-        <div className="program-badge"><ClipboardList size={13} aria-hidden /> Training Program</div>
-        <h1 className="program-title">{program.title}</h1>
-        {program.description && (
-          <div className="program-description">{program.description}</div>
-        )}
-        <div className="program-meta">
-          <div className="program-athlete">
-            <div className={`avatar ${compact ? 'avatar-sm' : 'avatar-xl'}`}>
-              {athlete?.avatar_url ? <img src={athlete.avatar_url} alt="" /> : initials}
-            </div>
-            <div className="program-athlete-info">
-              {!compact && <div className="program-athlete-label">Athlete</div>}
-              <div className="program-athlete-name">{athlete?.name} {athlete?.surname}</div>
-            </div>
-          </div>
-          <div className="program-meta-divider" />
-          <div className="program-meta-text">
-            {new Date(program.created_at).toLocaleDateString('en-GB', {
-              day: 'numeric', month: 'long', year: 'numeric',
-            })}
-          </div>
-          <div className="program-meta-divider" />
-          <div className="program-meta-text">{days.length} day{days.length !== 1 ? 's' : ''}</div>
-        </div>
-      </div>
-    </div>
-  )
+type Part = { value: string; unit?: string }
+
+// One exercise's numbers as sentence parts, always in the order sets, reps, load, rest
+function prescription(be: ViewBlockExercise): Part[] {
+  const parts: Part[] = []
+  const reps = be.reps?.trim() ?? ''
+  const kg   = be.kg?.trim() ?? ''
+
+  if (be.sets)               parts.push({ value: String(be.sets), unit: be.sets === 1 ? 'set' : 'sets' })
+  if (reps)                  parts.push(NUMERIC.test(reps) ? { value: range(reps), unit: 'reps' } : { value: reps })
+  if (kg)                    parts.push(NUMERIC.test(kg) ? { value: range(kg), unit: 'kg' } : { value: kg })
+  if (be.rest_seconds === 0) parts.push({ value: 'No rest' })
+  else if (be.rest_seconds != null) parts.push({ unit: 'rest', value: formatRest(be.rest_seconds) })
+
+  return parts
 }
 
-// ─── Day tabs + blocks ────────────────────────────────────────────────────
+function daySummary(day: ViewDay) {
+  const exercises = day.blocks.reduce((n, b) => n + b.block_exercises.length, 0)
+  if (exercises === 0) return null
+  return `${exercises} exercise${exercises !== 1 ? 's' : ''} in ${day.blocks.length} block${day.blocks.length !== 1 ? 's' : ''}`
+}
+
+// ─── Program ──────────────────────────────────────────────────────────────
 
 export type Video = { url: string; name: string }
 
-export function ProgramDays({ days, activeDay, setActiveDay, belowHeader = false }: {
-  days:         ViewDay[]
+export function ProgramView({ program, activeDay, setActiveDay }: {
+  program:      ProgramViewModel
   activeDay:    number
   setActiveDay: (index: number) => void
-  belowHeader?: boolean  // offset the sticky tabs when the page has a sticky header
 }) {
   const [video, setVideo] = useState<Video | null>(null)
-  const currentDay = days[activeDay] ?? null
+  // Which way the last day change went, so the new day slides in from that side
+  const [direction, setDirection] = useState<'next' | 'prev'>('next')
+  const touchStart = useRef<{ x: number; y: number } | null>(null)
+
+  const { athlete, days } = program
+  const currentDay        = days[activeDay] ?? null
+  const hasTabs           = days.length > 1
+
+  const goTo = (index: number) => {
+    if (index === activeDay || index < 0 || index >= days.length) return
+    setDirection(index > activeDay ? 'next' : 'prev')
+    setActiveDay(index)
+  }
+
+  // Phones: a clear horizontal swipe over the day moves to the next or previous day
+  const onTouchStart = (e: TouchEvent) => {
+    const t = e.touches[0]
+    touchStart.current = { x: t.clientX, y: t.clientY }
+  }
+  const onTouchEnd = (e: TouchEvent) => {
+    const start = touchStart.current
+    touchStart.current = null
+    if (!start || !hasTabs) return
+    const t  = e.changedTouches[0]
+    const dx = t.clientX - start.x
+    const dy = t.clientY - start.y
+    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.5) return
+    goTo(activeDay + (dx < 0 ? 1 : -1))
+  }
 
   return (
-    <>
-      {days.length > 0 && (
-        <div className={`day-tabs-wrap${belowHeader ? ' below-header' : ''}`}>
-          <div className="day-tabs" role="tablist" aria-label="Program days">
-            {days.map((d, i) => (
-              <button
-                key={d.id}
-                role="tab"
-                aria-selected={activeDay === i}
-                className={`day-tab${activeDay === i ? ' active' : ''}`}
-                onClick={() => setActiveDay(i)}
-              >
-                {d.name}
-              </button>
-            ))}
-          </div>
+    <LogShell>
+      <header className="log-head">
+        <div className="log-head-text">
+          <h1 className="log-athlete">{athlete?.name} {athlete?.surname}</h1>
+          <p className="log-program">{program.title}</p>
         </div>
+        {athlete?.avatar_url && <img className="log-avatar" src={athlete.avatar_url} alt="" />}
+      </header>
+
+      {program.description && <p className="log-brief">{program.description}</p>}
+
+      {hasTabs && <DayChips days={days} activeDay={activeDay} onSelect={goTo} />}
+
+      {!currentDay ? (
+        <p className="log-empty">Your coach hasn’t added any days yet.</p>
+      ) : (
+        // Keyed by day so the slide-in plays on every switch
+        <section
+          key={currentDay.id}
+          id="log-day"
+          className={`log-day from-${direction}`}
+          role={hasTabs ? 'tabpanel' : undefined}
+          aria-labelledby={hasTabs ? `day-tab-${activeDay}` : undefined}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+        >
+          <div className="day-head">
+            <h2 className="day-name">{currentDay.name}</h2>
+            {daySummary(currentDay) && <p className="day-summary">{daySummary(currentDay)}</p>}
+          </div>
+
+          {currentDay.blocks.length === 0 ? (
+            <p className="log-empty">Nothing planned for this day yet.</p>
+          ) : (
+            currentDay.blocks.map(block => (
+              <BlockPath key={block.id} block={block} onPlayVideo={setVideo} />
+            ))
+          )}
+
+          {hasTabs && activeDay < days.length - 1 && (
+            <button className="day-next" onClick={() => goTo(activeDay + 1)}>
+              <span>Next: {days[activeDay + 1].name}</span>
+              <ArrowRight size={18} aria-hidden />
+            </button>
+          )}
+        </section>
       )}
 
-      <div className="page-body">
-        {!currentDay ? (
-          <div className="empty-day">No days in this program</div>
-        ) : (
-          <>
-            <h2 className="day-title">{currentDay.name}</h2>
-            {currentDay.blocks.length === 0 ? (
-              <div className="empty-day">No blocks</div>
-            ) : (
-              <div className="blocks-list">
-                {currentDay.blocks.map((block, bi) => (
-                  <BlockCard key={block.id} block={block} index={bi} onPlayVideo={setVideo} />
-                ))}
-              </div>
-            )}
-          </>
-        )}
-      </div>
+      <footer className="log-foot">Glabro · Elevation Performance</footer>
 
       {video && <VideoModal video={video} onClose={() => setVideo(null)} />}
-    </>
+    </LogShell>
   )
 }
 
-// ─── BlockCard ────────────────────────────────────────────────────────────
-// Only shows the Sets/Reps/Kg/Rest columns that have at least one value.
+// The page frame; also used for the loading and missing states
+export function LogShell({ children, busy = false }: { children: React.ReactNode; busy?: boolean }) {
+  return (
+    <div className={`log ${manrope.variable}`}>
+      <main className="log-inner" aria-busy={busy || undefined}>
+        <p className="log-mark">Glabro</p>
+        {children}
+      </main>
+    </div>
+  )
+}
 
-function BlockCard({ block, index, onPlayVideo }: {
-  block:       ViewBlock
+export function ProgramLoader() {
+  return (
+    <LogShell busy>
+      <div className="log-loading" role="status">
+        <span className="sr-only">Loading your program</span>
+        <div className="log-loading-bar is-title" />
+        <div className="log-loading-bar is-sub" />
+        {[0, 1, 2].map(i => <div key={i} className="log-loading-bar is-row" />)}
+      </div>
+    </LogShell>
+  )
+}
+
+export function ProgramNotFound() {
+  return (
+    <LogShell>
+      <h1 className="log-athlete">Program not found</h1>
+      <p className="log-brief">This link may be old or mistyped. Ask your coach to send it again.</p>
+    </LogShell>
+  )
+}
+
+// ─── Day chips ────────────────────────────────────────────────────────────
+// A tablist; arrow keys move between days.
+
+function DayChips({ days, activeDay, onSelect }: {
+  days:      ViewDay[]
+  activeDay: number
+  onSelect:  (index: number) => void
+}) {
+  const refs = useRef<(HTMLButtonElement | null)[]>([])
+
+  const onKeyDown = (e: KeyboardEvent) => {
+    const last = days.length - 1
+    let next = -1
+    if (e.key === 'ArrowRight') next = activeDay === last ? 0 : activeDay + 1
+    if (e.key === 'ArrowLeft')  next = activeDay === 0 ? last : activeDay - 1
+    if (e.key === 'Home')       next = 0
+    if (e.key === 'End')        next = last
+    if (next < 0) return
+    e.preventDefault()
+    onSelect(next)
+    refs.current[next]?.focus()
+  }
+
+  return (
+    <div className="day-chips" role="tablist" aria-label="Program days" onKeyDown={onKeyDown}>
+      {days.map((d, i) => (
+        <button
+          key={d.id}
+          ref={el => { refs.current[i] = el }}
+          id={`day-tab-${i}`}
+          role="tab"
+          aria-selected={activeDay === i}
+          aria-controls="log-day"
+          tabIndex={activeDay === i ? 0 : -1}
+          className={`day-chip${activeDay === i ? ' is-active' : ''}`}
+          onClick={() => onSelect(i)}
+        >
+          {d.name}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ─── Block ────────────────────────────────────────────────────────────────
+
+function BlockPath({ block, onPlayVideo }: { block: ViewBlock; onPlayVideo: (video: Video) => void }) {
+  return (
+    <div className="block">
+      <h3 className="block-name">{block.name}</h3>
+      {block.block_exercises.length > 0 && (
+        <ol className="path">
+          {block.block_exercises.map((be, i) => (
+            <ExerciseStep key={be.id} be={be} index={i} onPlayVideo={onPlayVideo} />
+          ))}
+        </ol>
+      )}
+    </div>
+  )
+}
+
+function ExerciseStep({ be, index, onPlayVideo }: {
+  be:          ViewBlockExercise
   index:       number
   onPlayVideo: (video: Video) => void
 }) {
-  const exercises = block.block_exercises
-  const showSets  = exercises.some(be => be.sets != null && be.sets !== 0)
-  const showReps  = exercises.some(be => be.reps != null && be.reps !== '')
-  const showKg    = exercises.some(be => be.kg != null && be.kg !== '')
-  const showRest  = exercises.some(be => be.rest_seconds != null)
-  const colSpan   = 1 + [showSets, showReps, showKg, showRest].filter(Boolean).length
+  const name  = be.exercise?.name ?? '—'
+  const parts = prescription(be)
 
   return (
-    <div className="block-card" style={{ animationDelay: `${index * 0.07}s` }}>
-      <div className="block-header">
-        <div className="block-dot" />
-        <div className="block-name">{block.name}</div>
-      </div>
-      {exercises.length > 0 && (
-        <table className="ex-table">
-          <thead className="ex-thead">
-            <tr>
-              <th>Exercise</th>
-              {showSets && <th>Sets</th>}
-              {showReps && <th>Reps</th>}
-              {showKg   && <th>Kg</th>}
-              {showRest && <th>Rest</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {exercises.map(be => (
-              <React.Fragment key={be.id}>
-                <tr className="ex-row">
-                  <td className="ex-name">
-                    <span className="ex-name-text">{be.exercise?.name ?? '—'}</span>
-                    {be.exercise?.video_url && (
-                      <button
-                        className="btn-play"
-                        aria-label={`Play video: ${be.exercise?.name ?? 'exercise'}`}
-                        onClick={() => onPlayVideo({ url: be.exercise.video_url!, name: be.exercise?.name ?? '' })}
-                      >
-                        <Play size={12} aria-hidden /> Video
-                      </button>
-                    )}
-                  </td>
-                  {showSets && <td className="ex-cell"><span className={be.sets != null ? 'ex-cell-val' : ''}>{be.sets ?? '—'}</span></td>}
-                  {showReps && <td className="ex-cell"><span className={be.reps ? 'ex-cell-val' : ''}>{be.reps ?? '—'}</span></td>}
-                  {showKg   && <td className="ex-cell"><span className={be.kg ? 'ex-cell-val' : ''}>{be.kg ?? '—'}</span></td>}
-                  {showRest && <td className="ex-cell"><span className={be.rest_seconds != null ? 'ex-cell-val' : ''}>{be.rest_seconds != null ? formatRest(be.rest_seconds) : '—'}</span></td>}
-                </tr>
-                {be.notes && (
-                  <tr className="ex-row">
-                    <td colSpan={colSpan} className="ex-notes">
-                      <StickyNote size={13} aria-hidden /> {be.notes}
-                    </td>
-                  </tr>
-                )}
-              </React.Fragment>
+    // --i staggers the slide-in, capped so long blocks don't wait
+    <li className="step" style={{ '--i': Math.min(index, 8) } as React.CSSProperties}>
+      <div className="step-body">
+        <p className="step-name">{name}</p>
+        {parts.length > 0 && (
+          <p className="step-work">
+            {parts.map((p, i) => (
+              <span key={i} className="step-part">
+                {p.unit === 'rest'
+                  ? <><span className="step-unit">rest</span> <span className="step-value">{p.value}</span></>
+                  : <><span className="step-value">{p.value}</span>{p.unit && <> <span className="step-unit">{p.unit}</span></>}</>}
+              </span>
             ))}
-          </tbody>
-        </table>
+          </p>
+        )}
+        {be.notes && <p className="step-note">{be.notes}</p>}
+      </div>
+      {be.exercise?.video_url && (
+        <button
+          className="step-play"
+          aria-label={`Watch ${name}`}
+          onClick={() => onPlayVideo({ url: be.exercise.video_url!, name })}
+        >
+          <Play size={16} fill="currentColor" aria-hidden />
+        </button>
       )}
-    </div>
+    </li>
   )
 }
 
 // ─── VideoModal ───────────────────────────────────────────────────────────
+// Also used by the admin exercise library and picker, so it keeps the app's dark styling.
 
 export function VideoModal({ video, onClose }: { video: Video; onClose: () => void }) {
   return (

@@ -1,150 +1,188 @@
-/* Styles for components/programView.tsx */
+/* Styles for components/programView.tsx
+   A calm, dark training log. One face (Manrope 400–600); hierarchy comes from size and colour, not from bold.
+   One soft mint accent, only for the current day, the thread and play. Scoped under .log; the admin area keeps
+   the app tokens from globals.css. */
 
-/* ── Hero ── */
+.log {
+  --log-bg:      #111214;
+  --log-raised:  #18191c;
+  --log-line:    #26282c;
+  --log-text:    #ecebe7;
+  --log-muted:   #9a9ca3;   /* 7:1 on --log-bg */
+  --log-faint:   #7b7e86;   /* 4.6:1, units and small print only */
+  --log-accent:  #8fd4b8;
+  --log-accent-soft: #8fd4b81f;
+  --log-accent-ink:  #0d2419;
 
-.program-hero {
-  background: linear-gradient(160deg, var(--surface) 0%, var(--bg) 100%);
-  border-bottom: 1px solid var(--border);
-  padding: 48px 24px 40px;
-}
-.program-hero-inner { max-width: 860px; margin: 0 auto; }
-.program-badge {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-family: var(--font-display);
-  font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--accent); background: #1e2010; border: 1px solid #3a4010;
-  padding: 4px 10px; border-radius: 4px; margin-bottom: 20px;
-}
-.program-title {
-  font-family: var(--font-display);
-  font-size: clamp(32px, 6vw, 56px); font-weight: 800; letter-spacing: -0.01em;
-  color: var(--fg); line-height: 1; margin-bottom: 20px;
-}
-.program-description {
-  font-size: 16px; color: #a8a8c4; white-space: pre-line; line-height: 1.6; margin-top: 16px;
-  padding: 16px 20px; background: var(--surface);
-  border: 1px solid var(--border); border-left: 3px solid #3a3a6a; border-radius: 10px;
-}
-.program-meta {
-  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-  margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border);
-}
-.program-athlete { display: flex; align-items: center; gap: 16px; }
-.program-athlete-info { display: flex; flex-direction: column; gap: 3px; }
-.program-athlete-label {
-  font-family: var(--font-display);
-  font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase;
-  color: var(--fg-faint);
-}
-.program-athlete-name {
-  font-family: var(--font-display);
-  font-size: 26px; font-weight: 800; letter-spacing: 0.01em; color: #d0d0f0; line-height: 1;
-}
-.program-meta-divider { width: 1px; height: 28px; background: #2a2a3a; margin: 0 4px; }
-.program-meta-text { font-family: var(--font-display); font-size: 14px; letter-spacing: 0.05em; color: var(--fg-muted); }
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
-.avatar.avatar-xl {
-  width: 80px; height: 80px; font-size: 26px; color: #6a6aaa;
-  background: linear-gradient(135deg, #1e1e3a, #12121e);
-  border-color: #3a3a5a;
-  box-shadow: 0 0 0 5px #131320, 0 8px 32px rgba(80,80,180,0.2);
+  min-height: 100vh; min-height: 100dvh;
+  background: var(--log-bg);
+  color: var(--log-text);
+  font-family: var(--font-log), system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  color-scheme: dark;
+}
+/* Admin preview: the app header sits above */
+.page > .header + .log { min-height: calc(100dvh - var(--header-height)); }
+
+.log ::selection { background: #8fd4b840; color: var(--log-text); }
+.log :where(button, a):focus-visible { outline: 2px solid var(--log-accent); outline-offset: 3px; }
+
+.log-inner { max-width: 640px; margin: 0 auto; padding: 28px 24px 56px; }
+
+.log-mark {
+  margin: 0 0 44px;
+  font-size: 14px; font-weight: 600; letter-spacing: 0.02em; color: var(--log-faint);
 }
 
-/* Compact variant (admin view) */
-.program-hero.compact { padding: 36px 24px 28px; }
-.compact .program-badge { margin-bottom: 16px; }
-.compact .program-title { font-size: clamp(28px, 5vw, 48px); margin-bottom: 16px; }
-.compact .program-meta { margin-top: 16px; padding-top: 0; border-top: none; }
-.compact .program-athlete { gap: 10px; }
-.compact .program-athlete-name { font-size: 14px; font-weight: 700; color: #b8b8d4; }
-.compact .program-meta-divider { height: 14px; background: #2a2a3a; margin: 0; }
+/* ── Head ── */
 
-/* ── Day tabs ── */
+.log-head { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.log-head-text { min-width: 0; }
 
-.day-tabs-wrap {
-  position: sticky; top: 0; z-index: 40;
-  background: rgba(13,13,15,0.95); backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
+.log-athlete {
+  margin: 0;
+  font-size: clamp(30px, 6vw, 38px); font-weight: 600; line-height: 1.1; letter-spacing: -0.02em;
+  text-wrap: balance; overflow-wrap: anywhere;
 }
-.day-tabs-wrap.below-header { top: var(--header-height); }
-.day-tabs {
-  max-width: 860px; margin: 0 auto; padding: 0 24px;
-  display: flex; overflow-x: auto; scrollbar-width: none;
-}
-.day-tabs::-webkit-scrollbar { display: none; }
-.day-tab {
-  font-family: var(--font-display);
-  font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--fg-faint); background: none; border: none;
-  border-bottom: 2px solid transparent;
-  padding: 16px 18px; cursor: pointer; white-space: nowrap;
-  transition: color 0.15s, border-color 0.15s;
-}
-.day-tab:hover { color: #b0b0e0; }
-.day-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.log-program { margin: 6px 0 0; font-size: 17px; font-weight: 500; line-height: 1.4; color: var(--log-muted); }
 
-/* ── Day content ── */
-
-.day-title {
-  font-family: var(--font-display); margin: 0;
-  font-size: 28px; font-weight: 800; letter-spacing: 0.02em;
-  color: var(--fg); margin-bottom: 20px;
-}
-.blocks-list { display: flex; flex-direction: column; gap: 16px; }
-.empty-day {
-  text-align: center; padding: 48px; color: var(--fg-ghost);
-  font-family: var(--font-display);
-  font-size: 16px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+.log-avatar {
+  width: 60px; height: 60px; flex-shrink: 0; border-radius: 50%; object-fit: cover;
+  box-shadow: 0 0 0 1px var(--log-line);
 }
 
-.block-card {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
-  animation: fadeUp 0.3s ease both;
-}
-.block-header {
-  display: flex; align-items: center; gap: 10px;
-  padding: 12px 16px; background: var(--surface-raised); border-bottom: 1px solid var(--border);
-}
-.block-name {
-  font-family: var(--font-display);
-  font-size: 14px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #9a9ae0;
+.log-brief {
+  margin: 20px 0 0; max-width: 60ch;
+  font-size: 16px; line-height: 1.6; color: var(--log-muted); white-space: pre-line;
 }
 
-/* ── Exercise table ── */
+/* ── Day chips ── */
 
-.ex-table { width: 100%; border-collapse: collapse; }
-.ex-thead th {
-  font-family: var(--font-display);
-  font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--fg-faint); padding: 8px 16px; text-align: left; border-bottom: 1px solid #1c1c2e;
+.day-chips {
+  display: flex; gap: 8px;
+  margin: 32px -24px 0; padding: 0 24px 2px;
+  overflow-x: auto; scrollbar-width: none;
+  scroll-snap-type: x proximity;
 }
-.ex-thead th:not(:first-child) { text-align: center; }
-.ex-row { border-bottom: 1px solid #16162a; transition: background 0.12s; }
-.ex-row:last-child { border-bottom: none; }
-.ex-row:hover { background: #13131a; }
-.ex-name { padding: 12px 16px; font-size: 15px; font-weight: 500; color: #dcdcec; }
-.ex-cell {
-  padding: 12px 8px; text-align: center;
-  font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--fg-ghost);
-  white-space: nowrap;
-}
-.ex-cell-val { color: #dcdcf0; }
-.ex-notes {
-  padding: 0 16px 12px; font-size: 13px; line-height: 1.5; color: #b0a888;
-}
-.ex-notes svg { vertical-align: -2px; margin-right: 4px; color: #d0b060; }
-/* A note belongs to the exercise row above it, so drop the divider between them */
-.ex-row:has(+ .ex-row .ex-notes) { border-bottom: none; }
+.day-chips::-webkit-scrollbar { display: none; }
 
-.btn-play {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-family: var(--font-display);
-  font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-  color: #80c880; background: #0e180e; border: 1px solid #1f4a1f;
-  padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: all 0.15s;
-  vertical-align: middle; margin-left: 8px;
+.day-chip {
+  flex-shrink: 0; scroll-snap-align: start;
+  min-height: 44px; padding: 0 18px; border-radius: 999px;
+  font: inherit; font-size: 15px; font-weight: 500; white-space: nowrap;
+  color: var(--log-muted); background: var(--log-raised); border: 1px solid var(--log-line);
+  cursor: pointer; transition: color 0.2s, background-color 0.2s, border-color 0.2s;
+  -webkit-tap-highlight-color: transparent;
 }
-.btn-play:hover { color: #80cc80; border-color: #2a5a2a; background: #121e12; }
+@media (hover: hover) { .day-chip:not(.is-active):hover { color: var(--log-text); border-color: #34373c; } }
+.day-chip.is-active { color: var(--log-accent-ink); background: var(--log-accent); border-color: var(--log-accent); font-weight: 600; }
+
+/* ── Day ── */
+
+.log-day { margin-top: 36px; touch-action: pan-y; }
+.log-day.from-next { animation: log-in-next 0.3s var(--ease-out) both; }
+.log-day.from-prev { animation: log-in-prev 0.3s var(--ease-out) both; }
+
+.day-head { margin-bottom: 8px; }
+.day-name { margin: 0; font-size: 24px; font-weight: 600; line-height: 1.2; letter-spacing: -0.01em; }
+.day-summary { margin: 4px 0 0; font-size: 14px; color: var(--log-faint); }
+
+/* ── Blocks: a name, then its exercises strung on one thread ── */
+
+.block { margin-top: 32px; }
+.block-name { margin: 0 0 6px; font-size: 15px; font-weight: 600; color: var(--log-accent); letter-spacing: 0.01em; }
+
+.path { list-style: none; margin: 0; padding: 0; position: relative; }
+/* The thread */
+.path::before {
+  content: ""; position: absolute; left: 5px; top: 22px; bottom: 22px; width: 2px; border-radius: 1px;
+  background: linear-gradient(var(--log-accent), #8fd4b833);
+  opacity: 0.55;
+}
+
+.step {
+  position: relative;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; column-gap: 16px;
+  padding: 14px 0 14px 28px;
+}
+/* A bead on the thread for each exercise */
+.step::before {
+  content: ""; position: absolute; left: 1px; top: 22px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--log-bg); box-shadow: inset 0 0 0 2px var(--log-accent);
+}
+.step + .step::after {
+  content: ""; position: absolute; left: 28px; right: 0; top: 0; height: 1px; background: var(--log-line);
+}
+
+.step-name { margin: 0; font-size: 18px; font-weight: 500; line-height: 1.35; overflow-wrap: anywhere; }
+
+.step-work { display: flex; flex-wrap: wrap; column-gap: 14px; row-gap: 2px; margin: 4px 0 0; font-size: 16px; line-height: 1.5; }
+.step-part { white-space: nowrap; }
+.step-value { color: var(--log-text); font-weight: 500; }
+.step-unit  { color: var(--log-faint); }
+
+.step-note {
+  margin: 8px 0 0; max-width: 56ch;
+  font-size: 14px; line-height: 1.55; color: var(--log-muted); white-space: pre-line;
+}
+
+.step-play {
+  width: 44px; height: 44px; margin-top: 4px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--log-accent); background: var(--log-accent-soft); border: none; cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, transform 0.2s var(--ease-out);
+  -webkit-tap-highlight-color: transparent;
+}
+.step-play svg { margin-left: 2px; }
+@media (hover: hover) { .step-play:hover { color: var(--log-accent-ink); background: var(--log-accent); } }
+.step-play:active { transform: scale(0.94); color: var(--log-accent-ink); background: var(--log-accent); }
+
+/* ── Next day, foot ── */
+
+.day-next {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; margin-top: 36px; min-height: 52px; padding: 0 20px; border-radius: 14px;
+  font: inherit; font-size: 15px; font-weight: 500; text-align: left;
+  color: var(--log-text); background: var(--log-raised); border: 1px solid var(--log-line); cursor: pointer;
+  transition: border-color 0.2s;
+}
+.day-next svg { flex-shrink: 0; color: var(--log-accent); }
+@media (hover: hover) { .day-next:hover { border-color: #3a3d42; } }
+
+.log-foot { margin-top: 56px; font-size: 13px; color: var(--log-faint); }
+
+/* ── Empty, loading ── */
+
+.log-empty { margin: 24px 0 0; font-size: 16px; color: var(--log-muted); }
+
+.log-loading { display: grid; gap: 14px; }
+.log-loading-bar { border-radius: 8px; background: var(--log-raised); animation: log-pulse 1.1s ease-in-out infinite alternate; }
+.log-loading-bar.is-title { height: 38px; width: 70%; }
+.log-loading-bar.is-sub   { height: 18px; width: 45%; margin-bottom: 30px; }
+.log-loading-bar.is-row   { height: 64px; }
+
+/* ── Motion ── */
+
+@keyframes log-in-next { from { opacity: 0; transform: translateX(28px); } }
+@keyframes log-in-prev { from { opacity: 0; transform: translateX(-28px); } }
+@keyframes log-pulse   { to { background: #1f2124; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .log-day.from-next, .log-day.from-prev, .log-loading-bar { animation: none; }
+}
+
+/* ── Phones ── */
+
+@media (max-width: 640px) {
+  .log-inner { padding: 22px 20px 44px; }
+  .log-mark { margin-bottom: 32px; }
+  .day-chips { margin-left: -20px; margin-right: -20px; padding-left: 20px; padding-right: 20px; }
+  .log-avatar { width: 52px; height: 52px; }
+  .step { column-gap: 12px; }
+}
 
 /* ── Video modal ── */
 
@@ -176,32 +214,7 @@
   border-radius: 10px; background: #000; display: block;
 }
 
-/* ── Small screens (athletes mostly open this on a phone) ── */
-
 @media (max-width: 640px) {
-  .program-hero { padding: 32px 16px 28px; }
-  .program-hero.compact { padding: 24px 16px 20px; }
-  .program-description { font-size: 15px; padding: 12px 14px; }
-  .program-meta { gap: 12px; }
-  /* Athlete gets its own line; date and day count wrap below it */
-  .program-hero:not(.compact) .program-athlete { flex-basis: 100%; }
-  .program-hero:not(.compact) .program-athlete + .program-meta-divider { display: none; }
-  .program-athlete-name { font-size: 22px; }
-  .avatar.avatar-xl { width: 64px; height: 64px; font-size: 22px; }
-
-  .day-tabs { padding: 0 8px; }
-  .day-tab  { padding: 16px 14px; }
-
-  .day-title { font-size: 24px; margin-bottom: 16px; }
-
-  .ex-thead th { padding: 8px 10px; }
-  .ex-thead th:first-child, .ex-name, .ex-notes { padding-left: 14px; }
-  .ex-cell { padding: 12px 6px; }
-
-  /* Put the video button on its own line with a full-size tap target */
-  .ex-name-text { display: block; }
-  .btn-play { margin: 8px 0 0; padding: 7px 12px; min-height: 34px; }
-
   .video-modal-overlay { padding: 12px; }
   .video-modal { padding: 14px; }
   .video-modal-close { width: 40px; height: 40px; }
