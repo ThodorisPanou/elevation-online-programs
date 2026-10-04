@@ -10,7 +10,7 @@ import { ChevronRight, Plus } from 'lucide-react'
 import Modal from '@/components/modal'
 import { ProgramViewModel, ViewBlockExercise } from '@/lib/viewModels/ProgramViewModel'
 import {
-  ExerciseLog, ExerciseLogInput, LogInputError,
+  ExerciseLog, ExerciseLogInput,
   deleteMyExerciseLog, getMyExerciseHistory, getMyExerciseLogs, logExercise, updateMyExerciseLog,
 } from '@/lib/services/athleteAppService'
 import '@/app/me/me.css'   // dialog + form styles, also needed on the coach's program view
@@ -190,7 +190,7 @@ export function RecordSheet({ be, records, onClose }: { be: ViewBlockExercise; r
         onClose()
       }
     } catch (err) {
-      setError(err instanceof LogInputError ? err.message : (err as Error).message)
+      setError((err as Error).message)
     } finally {
       setSaving(false)
     }

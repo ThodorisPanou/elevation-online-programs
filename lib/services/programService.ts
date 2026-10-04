@@ -188,8 +188,9 @@ async function saveBlocks(dayId: string, blocks: UIBlock[], coachId: string | nu
 // Resolves the exercise_id to use:
 // 1. Name matches catalogue → use existing exercise id as-is
 // 2. Has an existing block_exercise id (editing saved row) + no catalogue match
-//    → update the exercise name in place, reuse the same exercise_id
-// 3. No existing id at all → reuse the coach's exercise with that name (any case), else create it
+//    → update the exercise name in place, reuse the same exercise_id — unless athletes have records of that
+//      exercise: renaming it would relabel their whole history, so fall through to 3 (the row gets another exercise)
+// 3. Otherwise → reuse the coach's exercise with that name (any case), else create it
 async function resolveExerciseId(ex: UIBlockExercise, coachId: string | null): Promise<string | null> {
   if (!ex.exerciseName?.trim()) return null
 
@@ -207,7 +208,7 @@ async function resolveExerciseId(ex: UIBlockExercise, coachId: string | null): P
       .single()
     if (fetchError) throw fetchError
 
-    if (beRow?.exercise_id) {
+    if (beRow?.exercise_id && !(await hasRecords(beRow.exercise_id))) {
       const { error: updateError } = await supabase
         .from('exercises')
         .update({ name: ex.exerciseName.trim() })
@@ -231,6 +232,14 @@ async function resolveExerciseId(ex: UIBlockExercise, coachId: string | null): P
     .single()
   if (error) throw error
   return data.id
+}
+
+// Coaches read their own athletes' records (RLS), and only their own athletes can log the coach's exercises
+async function hasRecords(exerciseId: string): Promise<boolean> {
+  const { count, error } = await supabase
+    .from('exercise_logs').select('id', { count: 'exact', head: true }).eq('exercise_id', exerciseId)
+  if (error) throw error
+  return (count ?? 0) > 0
 }
 
 async function findCoachExercise(name: string, coachId: string | null): Promise<string | null> {

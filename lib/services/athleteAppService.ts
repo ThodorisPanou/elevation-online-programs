@@ -86,10 +86,14 @@ export interface ExerciseLogInput {
   note?:        string
 }
 
-// The database's messages for bad values are written for the athlete; anything else gets a generic one
-export class LogInputError extends Error {}
+// Messages the athlete can act on. Only a real failure says "check your connection": retrying the other cases
+// can never work (e.g. the coach unticked Track while the program was open).
 function logError(where: string, error: { code?: string; message: string }): Error {
-  if (error.code === '23514') return new LogInputError(error.message)
+  switch (error.code) {
+    case '23514': return new Error(error.message)   // bad value — the database's message is written for the athlete
+    case '42501': return new Error('This exercise can’t be logged any more: your coach may have changed the program. Reload it and try again.')
+    case 'P0002': return new Error('This record was already removed. Reload to see your latest records.')
+  }
   console.error(`${where}:`, error)
   return new Error('Couldn’t save. Check your connection and try again.')
 }
