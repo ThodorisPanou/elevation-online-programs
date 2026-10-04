@@ -17,7 +17,7 @@ import { Loader } from '@/components/pageStatus'
 
 const PASSWORD_PAGE = '/admin/password'
 
-type Resolved = { me: Me } | { error: string } | { signOut: 'no-session' | 'no-access' }
+type Resolved = { me: Me } | { error: string } | { signOut: 'no-session' | 'no-access' } | { athleteApp: true }
 
 async function resolveMe(): Promise<Resolved> {
   const { data: { session } } = await supabase.auth.getSession()
@@ -25,6 +25,8 @@ async function resolveMe(): Promise<Resolved> {
 
   try {
     const me = await getMe()
+    // An athlete belongs in the athlete app, not here
+    if (!me.isAdmin && !me.coach && me.athlete && !me.athlete.login_disabled) return { athleteApp: true }
     // Signed in, but neither admin nor active coach (e.g. deactivated) → out
     if (!me.isAdmin && !me.coach?.active) return { signOut: 'no-access' }
     return { me }
@@ -48,11 +50,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   const load = useCallback(
     () => resolveMe().then(result => {
-      if ('me' in result)         setMe(result.me)
-      else if ('error' in result) setError(result.error)
-      else                        signOut(result.signOut === 'no-access' ? 'no-access' : undefined)
+      if ('me' in result)              setMe(result.me)
+      else if ('athleteApp' in result) router.replace('/me')
+      else if ('error' in result)      setError(result.error)
+      else                             signOut(result.signOut === 'no-access' ? 'no-access' : undefined)
     }),
-    [signOut],
+    [signOut, router],
   )
 
   useEffect(() => {

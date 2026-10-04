@@ -3,6 +3,7 @@
 // the service role (creating auth users, clearing must_change_password).
 
 import { apiFetch } from '@/lib/services/apiClient'
+import { supabase } from '@/lib/supabaseClient'
 
 // ─── Me ───────────────────────────────────────────────────────────────────
 
@@ -16,12 +17,26 @@ export interface Me {
     active:               boolean
     must_change_password: boolean
   } | null
+  athlete: {
+    id:             string
+    username:       string | null
+    login_disabled: boolean
+  } | null
 }
 
 export const getMe = () => apiFetch<Me>('/api/me')
 
-export const changeMyPassword = (password: string) =>
-  apiFetch<{ success: true }>('/api/me/password', { method: 'POST', body: { password } })
+export async function changeMyPassword(password: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession()
+  await apiFetch<{ success: true }>('/api/me/password', { method: 'POST', body: { password } })
+
+  // Supabase ends every session of a user whose password the server changes — this one too. Sign straight
+  // back in with the new password so the user stays logged in.
+  const email = session?.user.email
+  if (!email) return
+  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  if (error) throw new Error('Password changed — please sign in again with the new password')
+}
 
 // ─── Coaches (admin) ──────────────────────────────────────────────────────
 

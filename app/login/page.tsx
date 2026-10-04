@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient"
 import { useRouter, useSearchParams } from "next/navigation"
 import { TriangleAlert } from "lucide-react"
 import { toLoginEmail } from "@/lib/logins"
+import { getMe } from "@/lib/services/coachService"
 import "./login.css"
 
 // Set by app/admin/layout.tsx when it signs someone out
@@ -12,7 +13,7 @@ const REASONS: Record<string, string> = {
   "no-access": "This account doesn't have access (it may have been deactivated).",
 }
 
-// Coaches sign in with a username, admins with their email — see lib/logins.ts
+// Coaches and athletes sign in with a username, admins with their email — see lib/logins.ts
 function LoginForm() {
   const router = useRouter()
   const reason = useSearchParams().get("reason")
@@ -41,14 +42,16 @@ function LoginForm() {
       return
     }
 
-    // The admin layout sends a coach with a temporary password to /admin/password first
-    router.push("/admin/athletes")
+    // Athletes → their app; coaches/admins → the admin area (whose layout sends a coach with a temporary
+    // password to /admin/password first). If /api/me fails, the admin layout sorts it out.
+    const me = await getMe().catch(() => null)
+    router.push(me?.athlete && !me.isAdmin && !me.coach ? "/me" : "/admin/athletes")
   }
 
   return (
     <div className="page login-page">
       <form className="login-card" onSubmit={handleLogin}>
-        <div className="logo">Coach Panel</div>
+        <div className="logo">Glabro</div>
         <h1 className="login-title">Sign in</h1>
 
         <div className="field">

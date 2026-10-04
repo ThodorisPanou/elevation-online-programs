@@ -56,10 +56,11 @@ function daySummary(day: ViewDay) {
 
 export type Video = { url: string; name: string }
 
-export function ProgramView({ program, activeDay, setActiveDay }: {
+export function ProgramView({ program, activeDay, setActiveDay, nav }: {
   program:      ProgramViewModel
   activeDay:    number
   setActiveDay: (index: number) => void
+  nav?:         React.ReactNode   // top-right links, e.g. back to the athlete's program list
 }) {
   const [video, setVideo] = useState<Video | null>(null)
   // Which way the last day change went, so the new day slides in from that side
@@ -93,7 +94,7 @@ export function ProgramView({ program, activeDay, setActiveDay }: {
   }
 
   return (
-    <LogShell>
+    <LogShell nav={nav}>
       <header className="log-head">
         <div className="log-head-text">
           <h1 className="log-athlete">{athlete?.name} {athlete?.surname}</h1>
@@ -149,11 +150,18 @@ export function ProgramView({ program, activeDay, setActiveDay }: {
 }
 
 // The page frame; also used for the loading and missing states
-export function LogShell({ children, busy = false }: { children: React.ReactNode; busy?: boolean }) {
+export function LogShell({ children, busy = false, nav }: {
+  children: React.ReactNode
+  busy?:    boolean
+  nav?:     React.ReactNode
+}) {
   return (
     <div className={`log ${manrope.variable}`}>
       <main className="log-inner" aria-busy={busy || undefined}>
-        <p className="log-mark">Glabro</p>
+        <div className="log-top">
+          <p className="log-mark">Glabro</p>
+          {nav && <nav className="log-nav" aria-label="Account">{nav}</nav>}
+        </div>
         {children}
       </main>
     </div>
