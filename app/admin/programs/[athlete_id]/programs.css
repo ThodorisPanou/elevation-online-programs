@@ -25,7 +25,8 @@
   padding: 8px 12px 8px 8px;
   background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
   transition: border-color 0.2s;
-  animation: fadeUp 0.3s ease both;
+  /* backwards, not both: a kept end transform makes each card a layer, so the next card covered the "⋯" menu */
+  animation: fadeUp 0.3s ease backwards;
 }
 .program-card:hover { border-color: #2a2a40; }
 
