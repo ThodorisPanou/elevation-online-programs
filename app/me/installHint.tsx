@@ -10,6 +10,7 @@
 import { useEffect, useState } from 'react'
 import { Share, SquarePlus, X } from 'lucide-react'
 import { APP_SHORT_NAME } from '@/lib/brand'
+import { isInstalledApp } from '@/lib/installedApp'
 
 const DISMISS_KEY  = 'glabro.installHint.dismissedAt'
 const DISMISS_DAYS = 7
@@ -18,11 +19,6 @@ const DISMISS_DAYS = 7
 interface InstallPromptEvent extends Event {
   prompt: () => Promise<void>
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
-}
-
-function isInstalled() {
-  return window.matchMedia('(display-mode: standalone)').matches
-      || (navigator as Navigator & { standalone?: boolean }).standalone === true
 }
 
 function recentlyDismissed() {
@@ -35,7 +31,7 @@ function recentlyDismissed() {
 export function InstallHint() {
   // The athlete app renders only in the browser (after the auth check), so these are safe to read here
   const [isIOS]     = useState(() => /iPhone|iPad|iPod/i.test(navigator.userAgent))
-  const [hidden, setHidden] = useState(() => isInstalled() || recentlyDismissed())
+  const [hidden, setHidden] = useState(() => isInstalledApp() || recentlyDismissed())
   const [prompt, setPrompt] = useState<InstallPromptEvent | null>(null)
 
   useEffect(() => {

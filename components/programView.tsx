@@ -12,6 +12,7 @@ import Modal from '@/components/modal'
 import { ArrowRight, Play, RotateCcw, X } from 'lucide-react'
 import { APP_NAME, APP_SHORT_NAME } from '@/lib/brand'
 import { Credit } from '@/components/credit'
+import { isInstalledApp } from '@/lib/installedApp'
 import './programView.css'
 
 // Carries Greek, so athlete and exercise names never fall back to a different face
@@ -362,20 +363,24 @@ function reportVideoError(url: string, video: HTMLVideoElement, attempt: number)
     message:    video.error?.message?.slice(0, 200) ?? '',
     network:    video.networkState,
     host:       (() => { try { return new URL(url).host } catch { return 'invalid' } })(),
-    standalone: window.matchMedia('(display-mode: standalone)').matches,
+    standalone: isInstalledApp(),
     attempt,
   })
-  try { navigator.sendBeacon?.('/api/video-error', new Blob([body], { type: 'application/json' })) } catch {}
+  // A plain string goes as text/plain: a JSON-typed Blob isn't CORS-safelisted and some Chromium versions throw
+  try { navigator.sendBeacon?.('/api/video-error', body) } catch {}
 }
 
-export function VideoModal({ video, onClose }: { video: Video; onClose: () => void }) {
-  const [src,     setSrc]     = useState(() => withParam(video.url, 'v', VIDEO_CACHE_KEY))
-  const [attempt, setAttempt] = useState(0)
-  const [failed,  setFailed]  = useState(false)
+const MAX_REPORTS = 3   // per opened video, so repeated "Try again" on a dead link doesn't flood the log
 
-  // Retry under an address no cache has seen
+export function VideoModal({ video, onClose }: { video: Video; onClose: () => void }) {
+  const [retryStamp, setRetryStamp] = useState<string | null>(null)
+  const [attempt,    setAttempt]    = useState(0)
+  const [failed,     setFailed]     = useState<number | null>(null)   // MediaError code, null while playing
+  const src = retryStamp ? withParam(video.url, 'r', retryStamp) : withParam(video.url, 'v', VIDEO_CACHE_KEY)
+
+  // Retry under an address no cache has seen (the stamp is made here, not while rendering)
   const retry = () => {
-    setSrc(withParam(video.url, 'r', `${Date.now()}`)); setAttempt(a => a + 1); setFailed(false)
+    setRetryStamp(`${Date.now()}`); setAttempt(a => a + 1); setFailed(null)
   }
 
   return (
@@ -386,16 +391,22 @@ export function VideoModal({ video, onClose }: { video: Video; onClose: () => vo
           <X size={18} aria-hidden />
         </button>
       </div>
-      {failed ? (
+      {failed !== null ? (
         <div className="video-error" role="alert">
           <p className="video-error-title">This video didn’t load</p>
-          <p className="video-error-text">Check your connection and try again. If it keeps failing, let your coach know.</p>
+          <p className="video-error-text">
+            {failed === 2 ? 'Check your connection and try again.' : 'Try again in a moment.'} If it keeps failing,
+            let your coach know.
+          </p>
           <button className="video-error-retry" onClick={retry}><RotateCcw size={15} aria-hidden /> Try again</button>
         </div>
       ) : (
         <video
           key={src} className="video-player" src={src} controls playsInline preload="metadata"
-          onError={e => { reportVideoError(src, e.currentTarget, attempt); setFailed(true) }}
+          onError={e => {
+            if (attempt < MAX_REPORTS) reportVideoError(src, e.currentTarget, attempt)
+            setFailed(e.currentTarget.error?.code ?? 0)
+          }}
         />
       )}
     </Modal>

@@ -9,6 +9,7 @@ import { FormEvent, useState, useSyncExternalStore } from 'react'
 import { useRouter } from 'next/navigation'
 import { ClipboardPaste, TriangleAlert } from 'lucide-react'
 import { LinkInvalidError, signInWithLoginLink } from '@/lib/services/athleteAppService'
+import { isInstalledApp } from '@/lib/installedApp'
 
 const TOKEN = /^[A-Za-z0-9_-]{43}$/
 
@@ -19,11 +20,6 @@ export function tokenFromLink(input: string): string | null {
   // a pasted message, gluing the next words straight onto the link ("…/l/<token>Open it in Safari")
   const fromUrl = value.match(/\/l\/([A-Za-z0-9_-]{43})/)?.[1]
   return fromUrl ?? (TOKEN.test(value) ? value : null)
-}
-
-function isInstalledApp() {
-  return window.matchMedia('(display-mode: standalone)').matches
-      || (navigator as Navigator & { standalone?: boolean }).standalone === true
 }
 
 const noSubscribe = () => () => {}

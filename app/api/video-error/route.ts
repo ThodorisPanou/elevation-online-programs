@@ -5,6 +5,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
+  // Reports are ~200 bytes; refuse big bodies before buffering them
+  if (Number(req.headers.get('content-length') ?? 0) > 2000) return new NextResponse(null, { status: 413 })
   const text = (await req.text()).slice(0, 1000)
   let report: Record<string, unknown> = {}
   try {
