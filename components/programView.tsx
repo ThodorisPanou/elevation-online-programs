@@ -9,7 +9,7 @@ import Image from 'next/image'
 import { Manrope } from 'next/font/google'
 import { ProgramViewModel, ViewBlock, ViewBlockExercise, ViewDay } from '@/lib/viewModels/ProgramViewModel'
 import Modal from '@/components/modal'
-import { ArrowRight, Play, X } from 'lucide-react'
+import { ArrowRight, Play, RotateCcw, X } from 'lucide-react'
 import { APP_NAME, APP_SHORT_NAME } from '@/lib/brand'
 import { Credit } from '@/components/credit'
 import './programView.css'
@@ -342,8 +342,42 @@ function ExerciseStep({ be, index, onPlayVideo, extra }: {
 
 // ─── VideoModal ───────────────────────────────────────────────────────────
 // Also used by the admin exercise library and picker, so it keeps the app's dark styling.
+//
+// 2026-10-06: on some iPhones (Safari and the installed app) videos stopped playing while incognito on the same
+// phone played them — the signature of a failed load the browser kept. The video host ignores query strings, so:
+// - every video gets VIDEO_CACHE_KEY: a new value is a new address, so no device reuses an old saved response;
+// - a failure says so, "Try again" loads it once more under a never-seen address, and the error is reported
+//   (POST /api/video-error → server log) so the next report comes with evidence.
+
+const VIDEO_CACHE_KEY = '2026-10-06'
+
+function withParam(url: string, key: string, value: string) {
+  return `${url}${url.includes('?') ? '&' : '?'}${key}=${encodeURIComponent(value)}`
+}
+
+// MediaError codes: 1 aborted, 2 network, 3 decode, 4 not supported / not found
+function reportVideoError(url: string, video: HTMLVideoElement, attempt: number) {
+  const body = JSON.stringify({
+    code:       video.error?.code ?? 0,
+    message:    video.error?.message?.slice(0, 200) ?? '',
+    network:    video.networkState,
+    host:       (() => { try { return new URL(url).host } catch { return 'invalid' } })(),
+    standalone: window.matchMedia('(display-mode: standalone)').matches,
+    attempt,
+  })
+  try { navigator.sendBeacon?.('/api/video-error', new Blob([body], { type: 'application/json' })) } catch {}
+}
 
 export function VideoModal({ video, onClose }: { video: Video; onClose: () => void }) {
+  const [src,     setSrc]     = useState(() => withParam(video.url, 'v', VIDEO_CACHE_KEY))
+  const [attempt, setAttempt] = useState(0)
+  const [failed,  setFailed]  = useState(false)
+
+  // Retry under an address no cache has seen
+  const retry = () => {
+    setSrc(withParam(video.url, 'r', `${Date.now()}`)); setAttempt(a => a + 1); setFailed(false)
+  }
+
   return (
     <Modal onClose={onClose} title={video.name} className="video-modal" overlayClassName="video-modal-overlay">
       <div className="video-modal-header">
@@ -352,7 +386,18 @@ export function VideoModal({ video, onClose }: { video: Video; onClose: () => vo
           <X size={18} aria-hidden />
         </button>
       </div>
-      <video className="video-player" src={video.url} controls playsInline />
+      {failed ? (
+        <div className="video-error" role="alert">
+          <p className="video-error-title">This video didn’t load</p>
+          <p className="video-error-text">Check your connection and try again. If it keeps failing, let your coach know.</p>
+          <button className="video-error-retry" onClick={retry}><RotateCcw size={15} aria-hidden /> Try again</button>
+        </div>
+      ) : (
+        <video
+          key={src} className="video-player" src={src} controls playsInline preload="metadata"
+          onError={e => { reportVideoError(src, e.currentTarget, attempt); setFailed(true) }}
+        />
+      )}
     </Modal>
   )
 }
