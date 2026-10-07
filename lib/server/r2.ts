@@ -49,6 +49,11 @@ async function signature(dateStamp: string, stringToSign: string) {
   return hex(await hmac(signingKey, stringToSign))
 }
 
+/** Is this one of our video keys? (`<coach_id>/<uuid>.<ext>` or an older `<uuid>.<ext>`) */
+export function isVideoKey(key: string): boolean {
+  return KEY_PATTERN.test(key)
+}
+
 /** The coach folder of a key we generated, or null for an older key without a folder. */
 export function coachFolderOfKey(key: string): string | null {
   return key.match(KEY_PATTERN)?.[1]?.toLowerCase() ?? null
@@ -98,6 +103,32 @@ export async function presignPut(key: string, contentType: string, contentLength
   const stringToSign     = ['AWS4-HMAC-SHA256', amzDate, credentialScope, await sha256(canonicalRequest)].join('\n')
 
   return `https://${HOST}/${CF_R2_BUCKET}/${key}?${query}&X-Amz-Signature=${await signature(dateStamp, stringToSign)}`
+}
+
+/** GET an object through the S3 API (not the public r2.dev host). `range` is passed on as-is ("bytes=a-b"). */
+export async function getObject(key: string, range?: string) {
+  assertConfigured()
+  const { dateStamp, amzDate } = timestamps()
+  const credentialScope = `${dateStamp}/${REGION}/${SERVICE}/aws4_request`
+  const bodyHash = await sha256('')
+
+  const headers: Record<string, string> = {
+    'host':                 HOST,
+    'x-amz-content-sha256': bodyHash,
+    'x-amz-date':           amzDate,
+  }
+  const signedHeaders    = Object.keys(headers).sort().join(';')
+  const canonicalHeaders = Object.keys(headers).sort().map(k => `${k}:${headers[k]}\n`).join('')
+
+  const canonicalRequest = ['GET', `/${CF_R2_BUCKET}/${key}`, '', canonicalHeaders, signedHeaders, bodyHash].join('\n')
+  const stringToSign     = ['AWS4-HMAC-SHA256', amzDate, credentialScope, await sha256(canonicalRequest)].join('\n')
+
+  const authorization = `AWS4-HMAC-SHA256 Credential=${CF_R2_ACCESS_KEY}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${await signature(dateStamp, stringToSign)}`
+
+  return fetch(`https://${HOST}/${CF_R2_BUCKET}/${key}`, {
+    headers: { ...headers, Authorization: authorization, ...(range ? { Range: range } : {}) },
+    cache:   'no-store',
+  })
 }
 
 export async function deleteObject(key: string) {

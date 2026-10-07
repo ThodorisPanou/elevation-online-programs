@@ -33,7 +33,8 @@ Migrations A–E are all live on production (see TODO.md → Reference). The app
   `useMe()` guard every page (no session → `/login`; athlete → `/me`; temp password → `/admin/password`);
   `app/login` signs in (username or admin email; also "sign in with a login link")
 - `app/api/upload-video`, `app/api/delete-video` — R2 routes for coaches + admins (see Videos);
-  `app/api/video-error` — public, logs failed video loads (no user data) to the Vercel logs
+  `app/api/video-error` — public, logs failed video loads (no user data) to the Vercel logs;
+  `app/api/video/[...key]` — public, serves a video from the app's own address (player fallback, see Videos)
 - `app/api/coaches`, `app/api/coaches/[id]` — admin-only coach accounts (create, rename, reset password,
   deactivate); `app/api/me/password` — change own password. Logic in `lib/server/coaches.ts`
 - `app/api/athletes/[id]/login`, `.../login-link`, `app/api/athletes/[id]` (DELETE), `app/api/login-link/redeem`,
@@ -87,15 +88,20 @@ in `.env.db` (`PROD_DB_URL`, `DEV_DB_URL`). Never print these files' values.
   exercise is never deleted. Coach folder → that coach or admin; older folder-less files (unused) → any coach.
 - Tests (dev server + dev project + `online-videos-dev` bucket): `scripts/test-videos.mjs`, `scripts/test-rls.mjs`,
   `scripts/test-coach-api.mjs`.
-- Playback: `VideoModal` in `components/programView.tsx`, `<video controls playsInline>` with `?v=<VIDEO_CACHE_KEY>`
-  (bump it to give every device fresh addresses), an error state with "Try again" (new `?r=` address each time),
-  and reports to `/api/video-error` (max 3 per opened video). Search the Vercel logs for `video-error`.
+- Playback: `VideoModal` in `components/programView.tsx`, `<video controls playsInline>`. Loads from r2.dev
+  (`?v=<VIDEO_CACHE_KEY>`); on failure it switches by itself to `/api/video/<key>` (server reads R2 through the S3
+  API with Range support, pieces of max 8 MB, `Cache-Control: private`) and the device remembers that
+  (localStorage `video-via-app`). Only if that fails too: error state with "Try again" (new `?r=` address). Every
+  failure is reported to `/api/video-error` with `via` (max 3 per opened video) — search the Vercel logs for
+  `video-error`. Test: `.impeccable/ui-video.mjs` (blocks r2.dev in Chrome to check the fallback).
 - Existing files are H.264 `.mov`/`.mp4` with faststart. ~54 exercises still point to deleted Supabase Storage
   files (pre-R2 migration) and 404.
 - 2026-09-26: all videos briefly failed to play with DB, bucket and code all healthy — most likely `r2.dev`
   rate limiting/outage. Recovered on its own.
 - 2026-10-06: some iPhones (Safari + installed app) couldn't play any video while incognito on the same phone could
-  — likely a kept failed load. Fixed with the cache key + retry above; the custom domain is still the deeper fix.
+  — first thought a kept failed load, but fresh addresses failed too (2026-10-07): something on those devices
+  refuses r2.dev. Fixed with the app-address fallback above; serving videos from a custom domain would make the
+  fallback rare.
 
 ## Releasing
 

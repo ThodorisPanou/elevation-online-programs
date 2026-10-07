@@ -344,25 +344,47 @@ function ExerciseStep({ be, index, onPlayVideo, extra }: {
 // ─── VideoModal ───────────────────────────────────────────────────────────
 // Also used by the admin exercise library and picker, so it keeps the app's dark styling.
 //
-// 2026-10-06: on some iPhones (Safari and the installed app) videos stopped playing while incognito on the same
-// phone played them — the signature of a failed load the browser kept. The video host ignores query strings, so:
-// - every video gets VIDEO_CACHE_KEY: a new value is a new address, so no device reuses an old saved response;
-// - a failure says so, "Try again" loads it once more under a never-seen address, and the error is reported
-//   (POST /api/video-error → server log) so the next report comes with evidence.
+// 2026-10: on some iPhones (Safari and the installed app) no r2.dev video loaded, even under fresh addresses, while
+// incognito on the same phone played them — something on those devices refuses the r2.dev host. So:
+// - a video first loads from r2.dev (with VIDEO_CACHE_KEY: a new value is a new address for every device);
+// - if that fails, it switches on its own to the app's address (/api/video/<key>, read from R2 by the server),
+//   and the device remembers that, so its next videos start there;
+// - only if that fails too it shows the error with "Try again". Every failure is reported
+//   (POST /api/video-error → server log, "via" says which address failed).
 
 const VIDEO_CACHE_KEY = '2026-10-06'
+const VIA_APP_KEY     = 'video-via-app'   // localStorage: this device needs the app's address
+const MAX_REPORTS     = 3                 // per opened video, so repeated "Try again" doesn't flood the log
+
+type Via = 'direct' | 'app'
 
 function withParam(url: string, key: string, value: string) {
   return `${url}${url.includes('?') ? '&' : '?'}${key}=${encodeURIComponent(value)}`
 }
 
+// The app's own address for an R2 video, or null for anything else (e.g. old Supabase links)
+function appVideoUrl(url: string): string | null {
+  try {
+    const u = new URL(url)
+    return u.hostname.endsWith('.r2.dev') ? `/api/video${u.pathname}` : null
+  } catch { return null }
+}
+
+function deviceNeedsApp() {
+  try { return localStorage.getItem(VIA_APP_KEY) === '1' } catch { return false }
+}
+function rememberNeedsApp() {
+  try { localStorage.setItem(VIA_APP_KEY, '1') } catch {}
+}
+
 // MediaError codes: 1 aborted, 2 network, 3 decode, 4 not supported / not found
-function reportVideoError(url: string, video: HTMLVideoElement, attempt: number) {
+function reportVideoError(url: string, via: Via, video: HTMLVideoElement, attempt: number) {
   const body = JSON.stringify({
     code:       video.error?.code ?? 0,
     message:    video.error?.message?.slice(0, 200) ?? '',
     network:    video.networkState,
-    host:       (() => { try { return new URL(url).host } catch { return 'invalid' } })(),
+    host:       (() => { try { return new URL(url, location.href).host } catch { return 'invalid' } })(),
+    via,
     standalone: isInstalledApp(),
     attempt,
   })
@@ -370,18 +392,28 @@ function reportVideoError(url: string, video: HTMLVideoElement, attempt: number)
   try { navigator.sendBeacon?.('/api/video-error', body) } catch {}
 }
 
-const MAX_REPORTS = 3   // per opened video, so repeated "Try again" on a dead link doesn't flood the log
-
 export function VideoModal({ video, onClose }: { video: Video; onClose: () => void }) {
+  const appUrl = appVideoUrl(video.url)
+  const [via,        setVia]        = useState<Via>(() => appUrl && deviceNeedsApp() ? 'app' : 'direct')
   const [retryStamp, setRetryStamp] = useState<string | null>(null)
   const [attempt,    setAttempt]    = useState(0)
   const [failed,     setFailed]     = useState<number | null>(null)   // MediaError code, null while playing
-  const src = retryStamp ? withParam(video.url, 'r', retryStamp) : withParam(video.url, 'v', VIDEO_CACHE_KEY)
+
+  const base = via === 'app' && appUrl ? appUrl : video.url
+  const src  = retryStamp ? withParam(base, 'r', retryStamp) : via === 'app' ? base : withParam(base, 'v', VIDEO_CACHE_KEY)
+
+  const onError = (el: HTMLVideoElement) => {
+    if (attempt < MAX_REPORTS) reportVideoError(src, via, el, attempt)
+    setAttempt(a => a + 1)
+    if (via === 'direct' && appUrl) {       // r2.dev failed here: use the app's address, now and for later videos
+      rememberNeedsApp(); setVia('app'); setRetryStamp(null)
+      return
+    }
+    setFailed(el.error?.code ?? 0)
+  }
 
   // Retry under an address no cache has seen (the stamp is made here, not while rendering)
-  const retry = () => {
-    setRetryStamp(`${Date.now()}`); setAttempt(a => a + 1); setFailed(null)
-  }
+  const retry = () => { setRetryStamp(`${Date.now()}`); setFailed(null) }
 
   return (
     <Modal onClose={onClose} title={video.name} className="video-modal" overlayClassName="video-modal-overlay">
@@ -403,10 +435,7 @@ export function VideoModal({ video, onClose }: { video: Video; onClose: () => vo
       ) : (
         <video
           key={src} className="video-player" src={src} controls playsInline preload="metadata"
-          onError={e => {
-            if (attempt < MAX_REPORTS) reportVideoError(src, e.currentTarget, attempt)
-            setFailed(e.currentTarget.error?.code ?? 0)
-          }}
+          onError={e => onError(e.currentTarget)}
         />
       )}
     </Modal>

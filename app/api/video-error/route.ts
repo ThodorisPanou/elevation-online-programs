@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   } catch {}
   console.log('video-error', JSON.stringify({
     code: report.code, message: report.message, network: report.network, host: report.host,
-    standalone: report.standalone, attempt: report.attempt,
+    via: report.via, standalone: report.standalone, attempt: report.attempt,
     ua: req.headers.get('user-agent')?.slice(0, 300) ?? 'unknown',
   }))
   return new NextResponse(null, { status: 204 })
