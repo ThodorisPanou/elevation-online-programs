@@ -10,7 +10,7 @@ Roles: **admin** (row in `admins`) sees and edits everything and manages coach l
 (`can_manage()` etc., migration B); **athlete** (`athletes.user_id`, username login) has NO direct table access —
 only the security-definer `get_my_*()`, `log_exercise()` … functions (migrations C, D), because their own
 `athletes` row holds the coach's notes. Anon has no table access; share links go through `get_shared_program()`.
-Migrations A–E are all live on production (see TODO.md → Reference). The app's name lives in `lib/brand.ts`
+Migrations A–F are all live on production (see TODO.md → Reference). The app's name lives in `lib/brand.ts`
 ("Elevation Performance Online Programs", short "Elevation"); a coach's name shows only as "Coached by …".
 
 ## Stack
@@ -43,6 +43,13 @@ Migrations A–E are all live on production (see TODO.md → Reference). The app
   writes only via `log_exercise` / `update_my_exercise_log` / `delete_my_exercise_log`; coaches read their athletes'
   rows via RLS). UI: `components/exerciseRecords.tsx` (athlete Log sheet, history, progress; read-only line for the
   coach's view), `components/athleteRecords.tsx` (coach's "Records" on the athlete page)
+- Program dates (migration F): `programs.start_date` / `end_date` (date only, both days included; "today" =
+  `app_today()`, the date in Greece). Outside them `get_my_programs` leaves the program out, `get_my_program` /
+  `get_shared_program` return only `{ id, title, dates, coach_name, unavailable: true }` (no days) and
+  `log_exercise` refuses. The coach/admin still get the full program by id (`useProgram`), with
+  `availabilityNotice()`. UI: `ProgramUnavailable` in `components/programView.tsx`, the editor's date fields,
+  status badges on the coach's list; rules + formatting in `lib/programDates.ts` (`checkProgramDates` is shared by
+  the editor and `programService`; the DB has `programs_dates_check`). Copies get the DB defaults (today → +30)
 - `lib/services/*` — all Supabase queries; `lib/viewModels/*` — map DB rows to UI shapes; `lib/hooks/*` — page state
 - `lib/server/*` — server-only code (R2 SigV4 signing, `auth.ts` role guards, `supabaseAdmin.ts` service-role
   client). Never import from client components
@@ -115,6 +122,5 @@ its SQL test (rolled back) → apply the migration (additive, so the live app ke
 Personal checklist lives in `TODO.md` (gitignored, local only; finished plans in `TODO-archive.md`). Main open items:
 - Follow-ups: glabro's first login + ticking "Track"; a real-iPhone test of login link → home-screen app → Log sheet
 - To analyze: videos on a custom domain
-  (`r2.dev` is rate-limited; then `keyFromPublicUrl` must accept the old host), GDPR basics (privacy page, retention),
-  program availability (expiry date)
+  (`r2.dev` is rate-limited; then `keyFromPublicUrl` must accept the old host), GDPR basics (privacy page, retention)
 - ~54 legacy Supabase video links 404 (the player now shows its error state for them)
