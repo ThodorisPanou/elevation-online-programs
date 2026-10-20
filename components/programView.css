@@ -73,6 +73,13 @@
   user-select: none;
 }
 
+/* Coach's view of a closed program: says so once, quietly */
+.log-notice {
+  margin: 20px 0 0; padding: 10px 14px; border-radius: 12px; max-width: 60ch;
+  font-size: 14px; line-height: 1.5; color: var(--log-muted);
+  background: var(--log-raised); border: 1px solid var(--log-line);
+}
+
 .log-brief {
   margin: 20px 0 0; max-width: 60ch;
   font-size: 16px; line-height: 1.6; color: var(--log-muted); white-space: pre-line;

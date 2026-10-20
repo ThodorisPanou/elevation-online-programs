@@ -1,7 +1,8 @@
 'use client'
 
 // app/me/page.tsx
-// The athlete's home: all their programs, newest first, and their progress on the exercises they log.
+// The athlete's home: their programs open today (the database leaves out the others), newest first, and their
+// progress on the exercises they log.
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -13,9 +14,7 @@ import { MeNav } from './meNav'
 import { InstallHint } from './installHint'
 import { PasswordCard } from './passwordCard'
 import { MyProgress } from '@/components/exerciseRecords'
-
-const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+import { fmtDay } from '@/lib/programDates'
 
 export default function MyProgramsPage() {
   const { athlete } = useAthleteMe()
@@ -49,7 +48,7 @@ export default function MyProgramsPage() {
           {[0, 1, 2].map(i => <div key={i} className="log-loading-bar is-row" />)}
         </div>
       ) : programs.length === 0 ? (
-        <p className="log-empty">No programs yet. When your coach adds one, it shows up here.</p>
+        <p className="log-empty">No programs available right now. Speak with your coach about your next one.</p>
       ) : (
         <ul className="me-programs">
           {programs.map((p, i) => (
@@ -59,7 +58,7 @@ export default function MyProgramsPage() {
                   <span className="me-program-title">{p.title}</span>
                   <span className="me-program-meta">
                     {i === 0 && <span className="me-program-latest">Latest</span>}
-                    {p.day_count} day{p.day_count !== 1 ? 's' : ''} · {fmtDate(p.created_at)}
+                    {p.day_count} day{p.day_count !== 1 ? 's' : ''} · Until {fmtDay(p.end_date)}
                   </span>
                 </span>
                 <ChevronRight size={20} aria-hidden className="me-program-chevron" />

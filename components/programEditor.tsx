@@ -12,6 +12,7 @@ import { ExerciseCatalogueItem } from '@/lib/viewModels/ExerciseViewModel'
 import Modal from '@/components/modal'
 import { SortableItem, SortableList } from '@/components/sortable'
 import ExercisePicker from '@/components/exercisePicker'
+import { fmtDay, programStatus } from '@/lib/programDates'
 import { ArrowLeft, ChartLine, Play, Plus, StickyNote, Trash2, TriangleAlert, Upload, X } from 'lucide-react'
 import './programEditor.css'
 
@@ -19,6 +20,9 @@ interface ProgramEditorProps {
   // State
   title:          string
   description:    string
+  startDate:      string
+  endDate:        string
+  dateError:      string | null
   visibleDays:    UIDay[]
   totalExercises: number
   saving:         boolean
@@ -31,6 +35,8 @@ interface ProgramEditorProps {
   // Callbacks — passed straight from useEditProgram
   setTitle:       (v: string) => void
   setDescription: (v: string) => void
+  setStartDate:   (v: string) => void
+  setEndDate:     (v: string) => void
   addDay:         () => void
   removeDay:      (tempId: string) => void
   updateDayName:  (tempId: string, name: string) => void
@@ -61,16 +67,30 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 const countFilled = (exercises: UIBlockExercise[]) =>
   exercises.filter(e => !e._deleted && e.exerciseName?.trim()).length
 
+// What the dates mean for the athlete, in one line under the fields
+function availabilityNote(start: string, end: string): { text: string; tone?: 'warn' } | null {
+  if (!start || !end) return { text: 'The athlete can open the program from the start date through the end date.' }
+  if (end < start)    return { text: 'The end date is before the start date.', tone: 'warn' }
+  const days = Math.round((Date.parse(end) - Date.parse(start)) / 86_400_000) + 1
+  const span = `${days} day${days === 1 ? '' : 's'}, ${fmtDay(start, false)} – ${fmtDay(end)}`
+  switch (programStatus(start, end)) {
+    case 'upcoming': return { text: `${span}. Not open yet: the athlete sees it from ${fmtDay(start, false)}.` }
+    case 'ended':    return { text: `${span}. Ended: the athlete can’t open it any more.`, tone: 'warn' }
+    default:         return { text: `${span}. Open to the athlete now.` }
+  }
+}
+
 export default function ProgramEditor({
-  title, description, visibleDays, totalExercises, saving, error, dirty, catalogue,
+  title, description, startDate, endDate, dateError, visibleDays, totalExercises, saving, error, dirty, catalogue,
   saveLabel, breadcrumb,
-  setTitle, setDescription, addDay, removeDay, updateDayName, moveDay,
+  setTitle, setDescription, setStartDate, setEndDate, addDay, removeDay, updateDayName, moveDay,
   addBlock, removeBlock, updateBlockName, moveBlock,
   addExercise, removeExercise, updateExField, moveExercise,
   resolveExerciseId, selectExercise,
   onSave, onBack,
 }: ProgramEditorProps) {
   const [pending, setPending] = useState<PendingConfirm | null>(null)
+  const note = dateError ? { text: dateError, tone: 'warn' as const } : availabilityNote(startDate, endDate)
 
   // Warn before closing the tab / reloading with unsaved changes
   useEffect(() => {
@@ -154,6 +174,29 @@ export default function ProgramEditor({
             placeholder="Optional description — goals, notes, methodology…"
             rows={2}
           />
+
+          <fieldset className="editor-dates">
+            <legend className="eyebrow">Available</legend>
+            <div className="editor-dates-fields">
+              <label className="editor-date">
+                <span className="field-label">Start date</span>
+                <input
+                  type="date" className="field-input" required
+                  value={startDate} max={endDate || undefined}
+                  onChange={e => setStartDate(e.target.value)}
+                />
+              </label>
+              <label className="editor-date">
+                <span className="field-label">End date</span>
+                <input
+                  type="date" className="field-input" required
+                  value={endDate} min={startDate || undefined}
+                  onChange={e => setEndDate(e.target.value)}
+                />
+              </label>
+            </div>
+            {note && <p className={`editor-dates-note${note.tone === 'warn' ? ' is-warn' : ''}`} aria-live="polite">{note.text}</p>}
+          </fieldset>
 
           <div className="editor-days">
             <SortableList ids={visibleDays.map(d => d._tempId)} onMove={moveDay}>

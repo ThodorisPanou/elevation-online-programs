@@ -12,6 +12,7 @@ import AthleteRecords from '@/components/athleteRecords'
 import { ArrowLeft, Check, ClipboardList, Copy, Eye, Link, Pencil, Plus, Trash2, TriangleAlert } from 'lucide-react'
 import { ProgramViewModel } from '@/lib/viewModels/ProgramViewModel'
 import { copyText } from '@/lib/clipboard'
+import { ProgramStatus, fmtDay, programStatus } from '@/lib/programDates'
 import './programs.css'
 
 // "3 days · 24 exercises"
@@ -19,6 +20,15 @@ function programStats(p: ProgramViewModel) {
   const exercises = p.days.reduce((n, d) => n + d.blocks.reduce((m, b) => m + b.block_exercises.length, 0), 0)
   const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
   return `${plural(p.days.length, 'day')} · ${plural(exercises, 'exercise')}`
+}
+
+// What the athlete can open right now
+const STATUS_LABEL: Record<ProgramStatus, string> = { upcoming: 'Upcoming', active: 'Active', ended: 'Ended' }
+
+function programDates(p: ProgramViewModel) {
+  if (!p.start_date || !p.end_date) return ''
+  const sameYear = p.start_date.slice(0, 4) === p.end_date.slice(0, 4)
+  return `${fmtDay(p.start_date, !sameYear)} – ${fmtDay(p.end_date)}`
 }
 
 export default function AthleteProgramsPage() {
@@ -42,11 +52,6 @@ export default function AthleteProgramsPage() {
   const [copiedId,     setCopiedId]     = useState<string | null>(null)
   const [copyError,    setCopyError]    = useState<string | null>(null)
 
-
-  const fmt = (iso?: string) => {
-    if (!iso) return ''
-    return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-  }
 
   const openConfirm = (id: string, title: string) => {
     setConfirmId(id)
@@ -158,8 +163,10 @@ export default function AthleteProgramsPage() {
               )
               : (
                 <div className="program-list">
-                  {programs.map((p, i) => (
-                    <div key={p.id} className="program-card" style={{ animationDelay:`${i*0.05}s` }}>
+                  {programs.map((p, i) => {
+                    const status = programStatus(p.start_date, p.end_date)
+                    return (
+                    <div key={p.id} className={`program-card is-${status}`} style={{ animationDelay:`${i*0.05}s` }}>
                       <button
                         type="button"
                         className="prog-main"
@@ -168,7 +175,10 @@ export default function AthleteProgramsPage() {
                       >
                         <div className="prog-info">
                           <div className="prog-title">{p.title}</div>
-                          <div className="prog-meta">{programStats(p)} · {fmt(p.created_at)}</div>
+                          <div className="prog-meta">
+                            <span className={`prog-status is-${status}`}>{STATUS_LABEL[status]}</span>
+                            {programDates(p)} · {programStats(p)}
+                          </div>
                         </div>
                         <Pencil className="prog-edit-icon" size={15} aria-hidden />
                       </button>
@@ -194,7 +204,8 @@ export default function AthleteProgramsPage() {
                         />
                       </div>
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )
           }

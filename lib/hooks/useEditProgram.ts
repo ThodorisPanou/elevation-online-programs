@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { arrayMove } from '@dnd-kit/sortable'
 import { getProgramRawById, createProgram, updateProgram } from '@/lib/services/programService'
+import { addDays, checkProgramDates } from '@/lib/programDates'
 import {
   EditProgramViewModel,
   UIDay,
@@ -20,6 +21,9 @@ interface UseEditProgramResult {
   // State
   title:            string
   description:      string
+  startDate:        string
+  endDate:          string
+  dateError:        string | null   // a date the fields refused (start after end / end before start)
   days:             UIDay[]
   saving:           boolean
   loading:          boolean
@@ -31,6 +35,8 @@ interface UseEditProgramResult {
   // Title
   setTitle:         (title: string) => void
   setDescription:   (desc: string) => void
+  setStartDate:     (day: string) => void
+  setEndDate:       (day: string) => void
   // Day actions
   addDay:           () => void
   removeDay:        (tempId: string) => void
@@ -82,14 +88,33 @@ export function useEditProgram({
 
   const [title,       setTitle]       = useState('')
   const [description, setDescription] = useState('')
+  const [startDate,   setStartDateRaw] = useState('')
+  const [endDate,     setEndDateRaw]  = useState('')
+  const [dateError,   setDateError]   = useState<string | null>(null)
   const [days,    setDays]    = useState<UIDay[]>([])
   const [saving,  setSaving]  = useState(false)
   const [loading, setLoading] = useState(!!programId)  // only loading if editing
   const [error,   setError]   = useState<string | null>(null)
 
   // Snapshot of the last loaded/saved state; anything different is unsaved
-  const snapshot = (t: string, d: string, ds: UIDay[]) => JSON.stringify({ t, d, ds })
-  const [saved, setSaved] = useState(() => snapshot('', '', []))
+  const snapshot = (t: string, d: string, s: string, e: string, ds: UIDay[]) => JSON.stringify({ t, d, s, e, ds })
+  const [saved, setSaved] = useState(() => snapshot('', '', '', '', []))
+
+  // The fields never hold a start after the end: a refused date leaves the field as it was and says why.
+  // (The pickers' min/max grey those days out, but a date typed with the keyboard gets past them.)
+  // Picking a start with no end yet suggests the usual 30 days; the coach can still change it.
+  const setStartDate = (day: string) => {
+    if (day && endDate && day > endDate) { setDateError('The start date can’t be after the end date'); return }
+    setDateError(null)
+    setStartDateRaw(day)
+    if (day && !endDate) setEndDateRaw(addDays(day, 30))
+  }
+
+  const setEndDate = (day: string) => {
+    if (day && startDate && day < startDate) { setDateError('The end date can’t be before the start date'); return }
+    setDateError(null)
+    setEndDateRaw(day)
+  }
 
   // Load existing program when in edit mode
   useEffect(() => {
@@ -109,8 +134,10 @@ export function useEditProgram({
         const vm = mapToEditProgramViewModel(raw)
         setTitle(vm.title)
         setDescription(vm.description ?? '')
+        setStartDateRaw(vm.startDate)
+        setEndDateRaw(vm.endDate)
         setDays(vm.days)
-        setSaved(snapshot(vm.title, vm.description ?? '', vm.days))
+        setSaved(snapshot(vm.title, vm.description ?? '', vm.startDate, vm.endDate, vm.days))
       }
 
       setLoading(false)
@@ -318,11 +345,13 @@ export function useEditProgram({
 
   const save = async () => {
     if (!title.trim()) { setError('Title is required'); return }
+    const datesProblem = checkProgramDates(startDate, endDate)
+    if (datesProblem)  { setError(datesProblem); return }
 
     setSaving(true)
     setError(null)
 
-    const vm: EditProgramViewModel = { programId, title, description, days }
+    const vm: EditProgramViewModel = { programId, title, description, startDate, endDate, days }
 
     try {
       if (programId) {
@@ -330,7 +359,7 @@ export function useEditProgram({
       } else {
         await createProgram(athleteId, vm)
       }
-      setSaved(snapshot(title, description, days))
+      setSaved(snapshot(title, description, startDate, endDate, days))
       onSuccess(athleteId)
     } catch (e: any) {
       setError(e.message || 'Something went wrong')
@@ -342,15 +371,20 @@ export function useEditProgram({
   return {
     title,
     description,
+    startDate,
+    endDate,
+    dateError,
     days,
     saving,
     loading,
     error,
     visibleDays:    getVisibleDays(days),
     totalExercises: getTotalExercises(days),
-    dirty:          !loading && snapshot(title, description, days) !== saved,
+    dirty:          !loading && snapshot(title, description, startDate, endDate, days) !== saved,
     setTitle,
     setDescription,
+    setStartDate,
+    setEndDate,
     addDay,
     removeDay,
     updateDayName,

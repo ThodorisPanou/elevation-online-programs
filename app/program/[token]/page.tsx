@@ -10,7 +10,7 @@ import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useProgram } from '@/lib/hooks/useProgram'
 import { useCoachRecords } from '@/lib/hooks/useCoachRecords'
-import { ProgramLoader, ProgramNotFound, ProgramView, StepExtra } from '@/components/programView'
+import { ProgramLoader, ProgramNotFound, ProgramUnavailable, ProgramView, StepExtra, availabilityNotice } from '@/components/programView'
 import { RecordHistorySheet, RecordLine } from '@/components/exerciseRecords'
 import { ViewBlockExercise } from '@/lib/viewModels/ProgramViewModel'
 
@@ -24,6 +24,7 @@ export default function PublicProgramPage() {
 
   if (loading) return <ProgramLoader />
   if (notFound || !program) return <ProgramNotFound />
+  if (program.unavailable)  return <ProgramUnavailable program={program} />
 
   const logsOf = (be: ViewBlockExercise) => (records ?? []).filter(l => l.exercise_id === be.exercise?.id)
 
@@ -34,7 +35,10 @@ export default function PublicProgramPage() {
     : undefined
 
   return (
-    <ProgramView program={program} activeDay={activeDay} setActiveDay={setActiveDay} stepExtra={stepExtra}>
+    <ProgramView
+      program={program} activeDay={activeDay} setActiveDay={setActiveDay} stepExtra={stepExtra}
+      notice={availabilityNotice(program)}
+    >
       {history && (
         <RecordHistorySheet
           name={history.exercise?.name ?? 'Exercise'}

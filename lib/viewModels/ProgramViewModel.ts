@@ -47,6 +47,9 @@ export interface ProgramViewModel {
   description?: string
   public_token: string
   created_at:   string
+  start_date?:  string      // YYYY-MM-DD; open from start through end, both included (migration F)
+  end_date?:    string
+  unavailable?: boolean     // outside its dates: only title, dates and coach came back — no days
   coach_name?:  string      // the coach's display name ("Coached by …"), never the username
   athlete:      ViewAthlete
   days:         ViewDay[]   // pre-sorted by order_index
@@ -65,6 +68,9 @@ export function mapToProgramViewModel(raw: any): ProgramViewModel {
     description:  raw.description ?? undefined,
     public_token: raw.public_token,
     created_at:   raw.created_at,
+    start_date:   raw.start_date ?? undefined,
+    end_date:     raw.end_date   ?? undefined,
+    unavailable:  !!raw.unavailable,
     // program_json() sends coach_name; the coach's own query by id joins coaches
     coach_name:   raw.coach_name ?? raw.coaches?.name ?? undefined,
 

@@ -3,7 +3,7 @@
 import { useRouter, useParams } from 'next/navigation'
 import { useProgram } from '@/lib/hooks/useProgram'
 import { Loader, NotFound } from '@/components/pageStatus'
-import { ProgramView } from '@/components/programView'
+import { ProgramView, availabilityNotice } from '@/components/programView'
 import { ArrowLeft, Pencil } from 'lucide-react'
 
 export default function AdminProgramPage() {
@@ -30,7 +30,7 @@ export default function AdminProgramPage() {
       </header>
 
       {/* Exactly what the athlete sees on the share link */}
-      <ProgramView program={program} activeDay={activeDay} setActiveDay={setActiveDay} />
+      <ProgramView program={program} activeDay={activeDay} setActiveDay={setActiveDay} notice={availabilityNotice(program)} />
     </div>
   )
 }

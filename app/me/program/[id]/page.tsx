@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { LogShell, ProgramLoader, ProgramView, StepExtra } from '@/components/programView'
+import { LogShell, ProgramLoader, ProgramUnavailable, ProgramView, StepExtra } from '@/components/programView'
 import { RecordLine, RecordSheet, useExerciseLogs } from '@/components/exerciseRecords'
 import { ProgramViewModel, ViewBlockExercise } from '@/lib/viewModels/ProgramViewModel'
 import { getMyProgram } from '@/lib/services/athleteAppService'
@@ -42,6 +42,8 @@ export default function MyProgramPage() {
       </LogShell>
     )
   }
+
+  if (program.unavailable) return <ProgramUnavailable program={program} nav={<MeNav back />} />
 
   const stepExtra: StepExtra = be =>
     be.track && be.exercise?.id ? <RecordLine be={be} logs={records.of(be.exercise.id)} onLog={() => setLogging(be)} /> : null

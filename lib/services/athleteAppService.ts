@@ -19,6 +19,8 @@ export interface MyProgramSummary {
   title:       string
   description: string | null
   created_at:  string
+  start_date:  string   // YYYY-MM-DD; only programs open today come back
+  end_date:    string
   day_count:   number
 }
 
@@ -28,14 +30,15 @@ export async function getMyAthlete(): Promise<MyAthlete | null> {
   return data as MyAthlete | null
 }
 
-/** Newest first. */
+/** Programs open today, newest start first. */
 export async function getMyPrograms(): Promise<MyProgramSummary[]> {
   const { data, error } = await supabase.rpc('get_my_programs')
   if (error) { console.error('getMyPrograms:', error); throw error }
   return (data ?? []) as MyProgramSummary[]
 }
 
-/** null when the program doesn't exist or isn't this athlete's. */
+/** null when the program doesn't exist or isn't this athlete's; outside its dates only title, dates and coach
+ *  (unavailable: true). */
 export async function getMyProgram(id: string): Promise<ProgramViewModel | null> {
   const { data, error } = await supabase.rpc('get_my_program', { p_program_id: id })
   if (error) {

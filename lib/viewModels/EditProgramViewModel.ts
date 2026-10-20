@@ -42,6 +42,8 @@ export interface EditProgramViewModel {
   programId?:   string       // undefined = new program
   title:        string
   description?: string
+  startDate:    string       // YYYY-MM-DD, '' until the coach picks one (a new program starts empty)
+  endDate:      string
   days:         UIDay[]
 }
 
@@ -94,6 +96,8 @@ export function mapToEditProgramViewModel(raw: any): EditProgramViewModel {
     programId:   raw.id,
     title:       raw.title,
     description: raw.description ?? '',
+    startDate:   raw.start_date  ?? '',
+    endDate:     raw.end_date    ?? '',
     days: [...(raw.program_days ?? [])]
       .sort((a: any, b: any) => a.order_index - b.order_index)
       .map((d: any): UIDay => ({

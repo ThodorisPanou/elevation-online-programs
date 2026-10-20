@@ -13,6 +13,7 @@ import { ArrowRight, Play, RotateCcw, X } from 'lucide-react'
 import { APP_NAME, APP_SHORT_NAME } from '@/lib/brand'
 import { Credit } from '@/components/credit'
 import { isInstalledApp } from '@/lib/installedApp'
+import { fmtDay, programStatus } from '@/lib/programDates'
 import './programView.css'
 
 // Carries Greek, so athlete and exercise names never fall back to a different face
@@ -63,11 +64,12 @@ export type Video = { url: string; name: string }
 // Extra content under an exercise (null for none)
 export type StepExtra = (be: ViewBlockExercise) => React.ReactNode
 
-export function ProgramView({ program, activeDay, setActiveDay, nav, stepExtra, children }: {
+export function ProgramView({ program, activeDay, setActiveDay, nav, notice, stepExtra, children }: {
   program:      ProgramViewModel
   activeDay:    number
   setActiveDay: (index: number) => void
   nav?:         React.ReactNode   // top-right links, e.g. back to the athlete's program list
+  notice?:      React.ReactNode   // a line under the header, e.g. the coach's "not visible to the athlete"
   stepExtra?:   StepExtra         // athlete app: records + "Log" under tracked exercises
   children?:    React.ReactNode   // dialogs that need the page frame's styles
 }) {
@@ -112,6 +114,8 @@ export function ProgramView({ program, activeDay, setActiveDay, nav, stepExtra, 
         </div>
         <AthleteAvatar src={athlete?.avatar_url} name={athlete?.name} surname={athlete?.surname} />
       </header>
+
+      {notice && <p className="log-notice" role="note">{notice}</p>}
 
       {program.description && <p className="log-brief">{program.description}</p>}
 
@@ -224,6 +228,35 @@ export function ProgramLoader() {
       </div>
     </LogShell>
   )
+}
+
+// Outside the program's dates (the database sent only its title, dates and coach)
+export function ProgramUnavailable({ program, nav }: { program: ProgramViewModel; nav?: React.ReactNode }) {
+  const upcoming = programStatus(program.start_date, program.end_date) === 'upcoming'
+  return (
+    <LogShell nav={nav}>
+      <h1 className="log-athlete">Program not available</h1>
+      <p className="log-program">{program.title}</p>
+      <p className="log-brief">
+        {upcoming && program.start_date
+          ? `It opens on ${fmtDay(program.start_date)}. Speak with your coach if you need it sooner.`
+          : program.end_date
+            ? `It ended on ${fmtDay(program.end_date)}. Speak with your coach about your program.`
+            : 'Speak with your coach about your program.'}
+      </p>
+      {program.coach_name && <p className="log-coach">Coached by <strong className="log-coach-name">{program.coach_name}</strong></p>}
+      <LogFooter />
+    </LogShell>
+  )
+}
+
+// Coach / admin looking at a program the athlete can't open right now (null while it's open)
+export function availabilityNotice(program: ProgramViewModel): string | null {
+  switch (programStatus(program.start_date, program.end_date)) {
+    case 'upcoming': return `Not visible to the athlete yet — opens ${fmtDay(program.start_date)}.`
+    case 'ended':    return `Not visible to the athlete — ended ${fmtDay(program.end_date)}.`
+    default:         return null
+  }
 }
 
 export function ProgramNotFound() {

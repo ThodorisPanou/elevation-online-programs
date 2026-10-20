@@ -3,11 +3,12 @@
 import { supabase } from '@/lib/supabaseClient'
 import { ProgramViewModel, mapToProgramViewModel } from '@/lib/viewModels/ProgramViewModel'
 import { EditProgramViewModel, UIDay, UIBlock, UIBlockExercise } from '@/lib/viewModels/EditProgramViewModel'
+import { checkProgramDates } from '@/lib/programDates'
 
 // ─── Shared query ─────────────────────────────────────────────────────────
 
 const PROGRAM_QUERY = `
-  id, title, description, public_token, created_at,
+  id, title, description, public_token, created_at, start_date, end_date,
   athletes ( id, name, surname, avatar_url ),
   coaches ( name ),
   program_days (
@@ -25,7 +26,8 @@ const PROGRAM_QUERY = `
 // ─── Read ─────────────────────────────────────────────────────────────────
 
 // Share links: athletes open these without logging in. Anonymous users can't read the tables, so this goes
-// through get_shared_program (returns the same shape as PROGRAM_QUERY, only for public programs).
+// through get_shared_program (returns the same shape as PROGRAM_QUERY, only for public programs; outside the
+// program's dates only its title, dates and coach, with unavailable: true).
 export async function getProgramByToken(token: string): Promise<ProgramViewModel | null> {
   const { data, error } = await supabase.rpc('get_shared_program', { p_token: token })
 
@@ -42,7 +44,11 @@ export async function getProgramById(id: string): Promise<ProgramViewModel | nul
     .eq('id', id)
     .maybeSingle()
 
-  if (error) { console.error('getProgramById:', error); return null }
+  if (error) {
+    // Not a uuid (a share token) or no table access (an athlete): simply not theirs to open
+    if (error.code !== '22P02' && error.code !== '42501') console.error('getProgramById:', error)
+    return null
+  }
   if (!data)  return null
 
   return mapToProgramViewModel(data)
@@ -65,7 +71,7 @@ export async function getProgramRawById(id: string): Promise<any | null> {
   const { data, error } = await supabase
     .from('programs')
     .select(`
-      id, title, description,
+      id, title, description, start_date, end_date,
       program_days (
         id, name, order_index,
         blocks (
@@ -86,14 +92,33 @@ export async function getProgramRawById(id: string): Promise<any | null> {
 
 // ─── Write ────────────────────────────────────────────────────────────────
 
+// Checked here too, not only in the editor: every program write goes through these functions
+function assertDates(vm: EditProgramViewModel) {
+  const problem = checkProgramDates(vm.startDate, vm.endDate)
+  if (problem) throw new Error(problem)
+}
+
+// The database's own check (programs_dates_check) in words, should anything get past the one above
+function programWriteError(where: string, error: { code?: string; message: string }): Error {
+  console.error(`${where}:`, error)
+  if (error.code === '23514' && error.message.includes('programs_dates_check')) {
+    return new Error('The end date can’t be before the start date')
+  }
+  return error instanceof Error ? error : new Error(error.message)
+}
+
 export async function createProgram(athleteId: string, vm: EditProgramViewModel): Promise<string | null> {
+  assertDates(vm)
   const { data, error } = await supabase
     .from('programs')
-    .insert([{ athlete_id: athleteId, title: vm.title, description: vm.description || null }])
+    .insert([{
+      athlete_id: athleteId, title: vm.title, description: vm.description || null,
+      start_date: vm.startDate, end_date: vm.endDate,
+    }])
     .select()
     .single()
 
-  if (error) { console.error('createProgram:', error); throw error }
+  if (error) throw programWriteError('createProgram', error)
 
   // coach_id was filled in by the DB from the athlete (trigger)
   await saveDays(data.id, vm.days, data.coach_id ?? null)
@@ -102,15 +127,16 @@ export async function createProgram(athleteId: string, vm: EditProgramViewModel)
 
 export async function updateProgram(vm: EditProgramViewModel): Promise<void> {
   if (!vm.programId) throw new Error('programId is required for updateProgram')
+  assertDates(vm)
 
   const { data, error } = await supabase
     .from('programs')
-    .update({ title: vm.title, description: vm.description || null })
+    .update({ title: vm.title, description: vm.description || null, start_date: vm.startDate, end_date: vm.endDate })
     .eq('id', vm.programId)
     .select('coach_id')
     .single()
 
-  if (error) { console.error('updateProgram:', error); throw error }
+  if (error) throw programWriteError('updateProgram', error)
 
   await saveDays(vm.programId, vm.days, data.coach_id ?? null)
 }
@@ -323,7 +349,7 @@ export async function copyProgram(programId: string, targetAthleteId: string): P
 
   if (progErr) throw progErr
 
-  // 2. Insert new program for target athlete
+  // 2. Insert new program for target athlete — no dates sent: the database starts a copy today, for 30 days
   const { data: newProg, error: newProgErr } = await supabase
     .from('programs')
     .insert([{
